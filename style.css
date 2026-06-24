@@ -596,7 +596,7 @@ body {
 }
 
 /* ============================================================
-   СВЕТЛАЯ ТЕМА (переключается через data-theme="light")
+   СВЕТЛАЯ ТЕМА
    ============================================================ */
 [data-theme="light"] body {
     background: #f1f5f9;
@@ -726,6 +726,16 @@ body {
 [data-theme="light"] .btn-outline:hover {
     border-color: #0ea5e9;
     color: #0ea5e9;
+}
+
+[data-theme="light"] .goal-item {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+[data-theme="light"] .quest-item {
+    background: #f8fafc;
+    border-color: #e2e8f0;
 }
 
 /* ============================================================
