@@ -3,45 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinLife</title>
+    <title>My Way — Финансы</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
-    <!-- Экран авторизации -->
     <div id="authScreen" class="auth-screen">
+        <div class="auth-bg-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
         <div class="auth-box">
             <div class="auth-logo">
-                <i class="fas fa-coins"></i>
-                <span>FinLife</span>
-                <small>v3.0</small>
+                <div class="auth-logo-icon"><i class="fas fa-route"></i></div>
+                <div>
+                    <div class="auth-logo-title">My Way</div>
+                    <div class="auth-logo-sub">Твой финансовый путь</div>
+                </div>
             </div>
             <div class="auth-tabs">
                 <button class="auth-tab active" data-auth="login">Войти</button>
                 <button class="auth-tab" data-auth="register">Регистрация</button>
             </div>
             <div id="loginForm" class="auth-form">
-                <input type="email" id="loginEmail" placeholder="Email" />
-                <input type="password" id="loginPassword" placeholder="Пароль" />
+                <div class="form-field">
+                    <i class="fas fa-envelope field-icon"></i>
+                    <input type="email" id="loginEmail" placeholder="Email" autocomplete="email" />
+                </div>
+                <div class="form-field">
+                    <i class="fas fa-lock field-icon"></i>
+                    <input type="password" id="loginPassword" placeholder="Пароль" autocomplete="current-password" />
+                </div>
                 <button class="btn btn-primary w-full" id="loginBtn"><i class="fas fa-sign-in-alt"></i> Войти</button>
-                <div class="auth-hint">Демо: demo@finlife.kz / demo123</div>
+                <div class="auth-hint"><i class="fas fa-info-circle"></i> Демо: demo@myway.kz / demo123</div>
             </div>
             <div id="registerForm" class="auth-form hidden">
-                <input type="text" id="regName" placeholder="Ваше имя" />
-                <input type="email" id="regEmail" placeholder="Email" />
-                <input type="password" id="regPassword" placeholder="Пароль (мин. 6 символов)" />
-                <button class="btn btn-success w-full" id="registerBtn"><i class="fas fa-user-plus"></i> Создать аккаунт</button>
+                <div class="form-field">
+                    <i class="fas fa-user field-icon"></i>
+                    <input type="text" id="regName" placeholder="Ваше имя" autocomplete="name" />
+                </div>
+                <div class="form-field">
+                    <i class="fas fa-envelope field-icon"></i>
+                    <input type="email" id="regEmail" placeholder="Email" autocomplete="email" />
+                </div>
+                <div class="form-field">
+                    <i class="fas fa-lock field-icon"></i>
+                    <input type="password" id="regPassword" placeholder="Пароль (мин. 6 символов)" autocomplete="new-password" />
+                </div>
+                <button class="btn btn-primary w-full" id="registerBtn"><i class="fas fa-user-plus"></i> Создать аккаунт</button>
             </div>
         </div>
     </div>
 
-    <!-- Основное приложение -->
-    <div id="app" class="hidden">
-        <header id="header"></header>
-        <nav id="nav"></nav>
-        <main id="content"></main>
-        <footer id="footer"></footer>
+    <div id="app" class="hidden app-layout">
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-icon"><i class="fas fa-route"></i></div>
+                <div class="sidebar-logo-text">
+                    <span class="sidebar-logo-name">My Way</span>
+                    <span class="sidebar-logo-version">v3.0</span>
+                </div>
+            </div>
+            <nav id="nav" class="sidebar-nav"></nav>
+            <div class="sidebar-bottom">
+                <div id="sidebarUser" class="sidebar-user"></div>
+            </div>
+        </aside>
+        <div class="main-area">
+            <header id="header" class="topbar"></header>
+            <main id="content" class="content-area"></main>
+            <footer id="footer" class="bottombar"></footer>
+        </div>
     </div>
 
     <script src="app.js"></script>
