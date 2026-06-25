@@ -10,7 +10,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
-    <div id="app">
+    <div id="authOverlay" class="auth-overlay">
+        <div class="auth-box">
+            <div class="auth-logo"><i class="fas fa-coins"></i> FinLife</div>
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-mode="login">Войти</button>
+                <button class="auth-tab" data-mode="register">Регистрация</button>
+            </div>
+            <div id="authForm"></div>
+        </div>
+    </div>
+
+    <div id="app" style="display:none;">
         <header id="header"></header>
         <nav id="nav"></nav>
         <main id="content"></main>
