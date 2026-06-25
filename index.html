@@ -9,75 +9,150 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
-    <div id="authScreen" class="auth-screen">
-        <div class="auth-bg-shapes">
-            <div class="shape shape-1"></div>
-            <div class="shape shape-2"></div>
-            <div class="shape shape-3"></div>
+
+<!-- ═══════════════ ЭКРАН АВТОРИЗАЦИИ ═══════════════ -->
+<div id="authScreen" class="auth-screen">
+    <div class="auth-glow auth-glow-1"></div>
+    <div class="auth-glow auth-glow-2"></div>
+    <div class="auth-glow auth-glow-3"></div>
+
+    <div class="auth-box">
+        <!-- SVG LOGO -->
+        <div class="auth-logo">
+            <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="lg1" x1="0" y1="0" x2="52" y2="52" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#7c3aed"/>
+                        <stop offset="100%" stop-color="#06b6d4"/>
+                    </linearGradient>
+                    <filter id="glow">
+                        <feGaussianBlur stdDeviation="2.5" result="blur"/>
+                        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                </defs>
+                <rect width="52" height="52" rx="14" fill="url(#lg1)"/>
+                <!-- M path -->
+                <path d="M10 36 L10 18 L18 28 L26 18 L26 36" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow)"/>
+                <!-- W path -->
+                <path d="M28 18 L32 32 L36 24 L40 32 L44 18" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow)"/>
+                <!-- dot accent -->
+                <circle cx="40" cy="36" r="3" fill="#06b6d4"/>
+            </svg>
+            <div>
+                <div class="auth-logo-title">My Way</div>
+                <div class="auth-logo-sub">Твой финансовый путь</div>
+            </div>
         </div>
-        <div class="auth-box">
-            <div class="auth-logo">
-                <div class="auth-logo-icon"><i class="fas fa-route"></i></div>
+
+        <div class="auth-tabs">
+            <button class="auth-tab active" data-auth="login">Войти</button>
+            <button class="auth-tab" data-auth="register">Регистрация</button>
+        </div>
+
+        <div id="loginForm" class="auth-form">
+            <div class="form-field">
+                <i class="fas fa-envelope field-icon"></i>
+                <input type="email" id="loginEmail" placeholder="Email" autocomplete="email"/>
+            </div>
+            <div class="form-field">
+                <i class="fas fa-lock field-icon"></i>
+                <input type="password" id="loginPassword" placeholder="Пароль" autocomplete="current-password"/>
+            </div>
+            <button class="btn btn-primary w-full" id="loginBtn">
+                <i class="fas fa-sign-in-alt"></i> Войти
+            </button>
+            <div class="auth-hint"><i class="fas fa-circle-info"></i> Демо: demo@myway.kz / demo123</div>
+        </div>
+
+        <div id="registerForm" class="auth-form hidden">
+            <div class="form-field">
+                <i class="fas fa-user field-icon"></i>
+                <input type="text" id="regName" placeholder="Ваше имя" autocomplete="name"/>
+            </div>
+            <div class="form-field">
+                <i class="fas fa-envelope field-icon"></i>
+                <input type="email" id="regEmail" placeholder="Email" autocomplete="email"/>
+            </div>
+            <div class="form-field">
+                <i class="fas fa-lock field-icon"></i>
+                <input type="password" id="regPassword" placeholder="Пароль (мин. 6 символов)" autocomplete="new-password"/>
+            </div>
+            <button class="btn btn-primary w-full" id="registerBtn">
+                <i class="fas fa-user-plus"></i> Создать аккаунт
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ ОСНОВНОЕ ПРИЛОЖЕНИЕ ═══════════════ -->
+<div id="app" class="hidden app-layout">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="sidebar">
+        <div class="sidebar-logo">
+            <svg width="34" height="34" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="slg" x1="0" y1="0" x2="52" y2="52" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#7c3aed"/>
+                        <stop offset="100%" stop-color="#06b6d4"/>
+                    </linearGradient>
+                </defs>
+                <rect width="52" height="52" rx="14" fill="url(#slg)"/>
+                <path d="M10 36 L10 18 L18 28 L26 18 L26 36" stroke="white" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <path d="M28 18 L32 32 L36 24 L40 32 L44 18" stroke="white" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <circle cx="40" cy="36" r="3" fill="#06b6d4"/>
+            </svg>
+            <div class="sidebar-logo-text">
+                <span class="sidebar-logo-name">My Way</span>
+            </div>
+        </div>
+
+        <nav id="nav" class="sidebar-nav"></nav>
+
+        <div class="sidebar-bottom">
+            <div id="sidebarUser" class="sidebar-user"></div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main-area">
+        <header id="header" class="topbar"></header>
+        <main id="content" class="content-area"></main>
+        <footer id="footer" class="bottombar"></footer>
+    </div>
+</div>
+
+<!-- AI CHAT BUBBLE -->
+<div id="aiChatBubble" class="ai-chat-bubble hidden">
+    <div class="ai-chat-window">
+        <div class="ai-chat-header">
+            <div class="ai-chat-title">
+                <div class="ai-chat-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
                 <div>
-                    <div class="auth-logo-title">My Way</div>
-                    <div class="auth-logo-sub">Твой финансовый путь</div>
+                    <div style="font-weight:700;font-size:14px;">ИИ-советник</div>
+                    <div style="font-size:11px;opacity:0.7;">My Way Assistant</div>
                 </div>
             </div>
-            <div class="auth-tabs">
-                <button class="auth-tab active" data-auth="login">Войти</button>
-                <button class="auth-tab" data-auth="register">Регистрация</button>
-            </div>
-            <div id="loginForm" class="auth-form">
-                <div class="form-field">
-                    <i class="fas fa-envelope field-icon"></i>
-                    <input type="email" id="loginEmail" placeholder="Email" autocomplete="email" />
-                </div>
-                <div class="form-field">
-                    <i class="fas fa-lock field-icon"></i>
-                    <input type="password" id="loginPassword" placeholder="Пароль" autocomplete="current-password" />
-                </div>
-                <button class="btn btn-primary w-full" id="loginBtn"><i class="fas fa-sign-in-alt"></i> Войти</button>
-                <div class="auth-hint"><i class="fas fa-info-circle"></i> Демо: demo@myway.kz / demo123</div>
-            </div>
-            <div id="registerForm" class="auth-form hidden">
-                <div class="form-field">
-                    <i class="fas fa-user field-icon"></i>
-                    <input type="text" id="regName" placeholder="Ваше имя" autocomplete="name" />
-                </div>
-                <div class="form-field">
-                    <i class="fas fa-envelope field-icon"></i>
-                    <input type="email" id="regEmail" placeholder="Email" autocomplete="email" />
-                </div>
-                <div class="form-field">
-                    <i class="fas fa-lock field-icon"></i>
-                    <input type="password" id="regPassword" placeholder="Пароль (мин. 6 символов)" autocomplete="new-password" />
-                </div>
-                <button class="btn btn-primary w-full" id="registerBtn"><i class="fas fa-user-plus"></i> Создать аккаунт</button>
+            <button id="aiChatClose" class="ai-chat-close">✕</button>
+        </div>
+        <div id="aiChatMessages" class="ai-chat-messages">
+            <div class="ai-msg ai-msg-bot">
+                <div class="ai-msg-bubble">Привет! 👋 Я ваш финансовый ИИ-советник. Спросите меня про расходы, сбережения или финансовые советы!</div>
             </div>
         </div>
-    </div>
-
-    <div id="app" class="hidden app-layout">
-        <aside id="sidebar" class="sidebar">
-            <div class="sidebar-logo">
-                <div class="sidebar-logo-icon"><i class="fas fa-route"></i></div>
-                <div class="sidebar-logo-text">
-                    <span class="sidebar-logo-name">My Way</span>
-                    <span class="sidebar-logo-version">v3.0</span>
-                </div>
-            </div>
-            <nav id="nav" class="sidebar-nav"></nav>
-            <div class="sidebar-bottom">
-                <div id="sidebarUser" class="sidebar-user"></div>
-            </div>
-        </aside>
-        <div class="main-area">
-            <header id="header" class="topbar"></header>
-            <main id="content" class="content-area"></main>
-            <footer id="footer" class="bottombar"></footer>
+        <div class="ai-chat-input-row">
+            <input type="text" id="aiChatInput" placeholder="Задайте вопрос..." />
+            <button id="aiChatSend" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
+    <button id="aiChatToggle" class="ai-chat-toggle">
+        <i class="fas fa-robot"></i>
+        <span class="ai-chat-badge">ИИ</span>
+    </button>
+</div>
 
-    <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
