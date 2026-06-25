@@ -1,3 +1,4 @@
+const CURRENT_USER = { name: 'Demo', email: 'demo@myway.kz', avatar: 'D' };
 const TAB_LABELS = {
     dashboard:     { icon:'fa-chart-pie',   label:'Дашборд' },
     transactions:  { icon:'fa-list-ul',     label:'Транзакции' },
