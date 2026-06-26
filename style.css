@@ -718,3 +718,79 @@ body{
   .cards-grid{grid-template-columns:1fr;}
   .ai-chat-window{width:calc(100vw - 48px);}
 }
+/* ================================================================
+   ДОПОЛНЕНИЯ — My Way v3
+================================================================ */
+
+/* Topbar */
+.topbar-left{display:flex;align-items:center;gap:14px;}
+.topbar-title{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;}
+.topbar-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.menu-toggle{display:none;width:36px;height:36px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);color:var(--text2);cursor:pointer;align-items:center;justify-content:center;font-size:14px;}
+@media(max-width:900px){.menu-toggle{display:flex;}}
+
+/* Currency select */
+.currency-select{padding:6px 10px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);font-family:'Inter',sans-serif;font-size:12px;color:var(--text);outline:none;cursor:pointer;}
+
+/* Theme btn */
+.theme-btn{width:34px;height:34px;background:var(--bg3);border:1px solid var(--border2);border-radius:50%;color:var(--text2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.theme-btn:hover{background:var(--bg4);color:var(--text);}
+
+/* Badges */
+.badge{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-green{background:var(--green-d);color:var(--green);border:1px solid rgba(16,185,129,.2);}
+.badge-gold{background:rgba(245,158,11,.12);color:var(--gold);border:1px solid rgba(245,158,11,.2);}
+.badge-blue{background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.2);}
+
+/* Content area */
+.content-area{flex:1;padding:24px;overflow-y:auto;}
+.bottombar{padding:12px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text3);}
+
+/* Card */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 22px;margin-bottom:0;}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.card-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.card-label i{color:var(--accent2);}
+
+/* Grids */
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;}
+@media(max-width:900px){.grid-3{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.grid-3,.grid-2{grid-template-columns:1fr;}}
+
+/* Buttons */
+.btn{padding:9px 18px;border:none;border-radius:var(--r-sm);font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:all .18s;display:inline-flex;align-items:center;gap:6px;}
+.btn:hover{transform:translateY(-1px);}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 14px rgba(124,58,237,.3);}
+.btn-primary:hover{box-shadow:0 6px 20px rgba(124,58,237,.4);}
+.btn-success{background:var(--green);color:#fff;}
+.btn-success:hover{background:#059669;}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-danger:hover{background:#e11d48;}
+.btn-warning{background:var(--gold);color:#fff;}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text2);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent2);}
+.btn-sm{padding:6px 12px;font-size:12px;}
+
+/* Balance amount gradient */
+.balance-amount{background:linear-gradient(120deg,var(--text),var(--accent2),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+/* Card colors */
+.card-mini.purple,.card-mini-purple{background:linear-gradient(135deg,#7c3aed,#9f67ff);}
+.card-mini.blue,.card-mini-blue{background:linear-gradient(135deg,#2563eb,#06b6d4);}
+.card-mini.green,.card-mini-green{background:linear-gradient(135deg,#059669,#10b981);}
+.card-mini.orange,.card-mini-orange{background:linear-gradient(135deg,#d97706,#f97316);}
+.card-mini.red,.card-mini-red{background:linear-gradient(135deg,#be123c,#f43f5e);}
+.card-mini.dark,.card-mini-dark{background:linear-gradient(135deg,#0f172a,#1e293b);}
+.card-mini.gold,.card-mini-gold{background:linear-gradient(135deg,#b45309,#f59e0b);}
+
+/* Active currency row */
+.currency-row.active{background:rgba(124,58,237,.08);}
+
+/* Form group select */
+.form-group select{width:100%;padding:10px 13px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);font-family:'Inter',sans-serif;font-size:13px;color:var(--text);outline:none;cursor:pointer;}
+.form-group select:focus{border-color:var(--accent);}
+
+/* AI Tab */
+.ai-msg-bubble p{margin:0;}
