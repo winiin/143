@@ -378,6 +378,13 @@ body{
 .tx-amount{font-size:14px;font-weight:700;white-space:nowrap;}
 .tx-amount.income{color:var(--green);}
 .tx-amount.expense{color:var(--red);}
+.tx-del-btn{
+  width:24px;height:24px;border-radius:6px;border:1px solid var(--border2);
+  background:transparent;color:var(--text3);cursor:pointer;font-size:11px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;flex-shrink:0;
+}
+.tx-del-btn:hover{background:var(--red-d);border-color:var(--red);color:var(--red);}
 
 /* ================================================================
    GOALS
@@ -617,7 +624,8 @@ body{
   border:1px solid var(--border2);border-radius:18px;
   box-shadow:0 20px 60px rgba(0,0,0,.6);
   overflow:hidden;
-  animation:slideUp .22s ease;
+  display:none;
+  flex-direction:column;
 }
 .ai-chat-header{
   display:flex;align-items:center;justify-content:space-between;

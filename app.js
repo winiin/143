@@ -8,7 +8,7 @@ const LANGS = {
     loginBtn:'Войти', registerBtn:'Создать аккаунт',
     emailPh:'Email', passPh:'Пароль', namePh:'Ваше имя', passPh2:'Пароль (мин. 6 символов)',
     demo:'Демо: demo@myway.kz / demo123',
-    nav:{dashboard:'Дашборд',transactions:'Транзакции',cards:'Карты',deposits:'Депозиты',stats:'Статистика',goals:'Цели',gamification:'Игра'},
+    nav:{dashboard:'Дашборд',transactions:'Транзакции',cards:'Карты',deposits:'Депозиты',stats:'Статистика',goals:'Цели',gamification:'Игра',ai:'ИИ-советник'},
     balance:'Баланс', income:'Доходы', expense:'Расходы', savings:'Норма сбережений',
     txTitle:'Добавить операцию', txPh:'"Кофе 350" или "Зарплата 200000"',
     addBtn:'Добавить', clearBtn:'Очистить всё',
@@ -62,7 +62,7 @@ const LANGS = {
     loginBtn:'Кіру', registerBtn:'Аккаунт жасау',
     emailPh:'Email', passPh:'Құпия сөз', namePh:'Атыңыз', passPh2:'Құпия сөз (кем дегенде 6 таңба)',
     demo:'Демо: demo@myway.kz / demo123',
-    nav:{dashboard:'Басты',transactions:'Операциялар',cards:'Карталар',deposits:'Депозиттер',stats:'Статистика',goals:'Мақсаттар',gamification:'Ойын'},
+    nav:{dashboard:'Басты',transactions:'Операциялар',cards:'Карталар',deposits:'Депозиттер',stats:'Статистика',goals:'Мақсаттар',gamification:'Ойын',ai:'ЖИ-кеңес'},
     balance:'Баланс', income:'Кірістер', expense:'Шығыстар', savings:'Жинақ мөлшері',
     txTitle:'Операция қосу', txPh:'"Кофе 350" немесе "Жалақы 200000"',
     addBtn:'Қосу', clearBtn:'Барлығын өшіру',
@@ -116,7 +116,7 @@ const LANGS = {
     loginBtn:'Login', registerBtn:'Create account',
     emailPh:'Email', passPh:'Password', namePh:'Your name', passPh2:'Password (min. 6 chars)',
     demo:'Demo: demo@myway.kz / demo123',
-    nav:{dashboard:'Dashboard',transactions:'Transactions',cards:'Cards',deposits:'Deposits',stats:'Statistics',goals:'Goals',gamification:'Game'},
+    nav:{dashboard:'Dashboard',transactions:'Transactions',cards:'Cards',deposits:'Deposits',stats:'Statistics',goals:'Goals',gamification:'Game',ai:'AI Advisor'},
     balance:'Balance', income:'Income', expense:'Expenses', savings:'Savings rate',
     txTitle:'Add transaction', txPh:'"Coffee 350" or "Salary 200000"',
     addBtn:'Add', clearBtn:'Clear all',
@@ -165,14 +165,14 @@ const LANGS = {
     cardsByCards:'Expenses by card',
   }
 };
- 
+
 let CURRENT_LANG = 'ru';
 function t(key, sub) {
   const lang = LANGS[CURRENT_LANG] || LANGS.ru;
   if (sub) return (lang[key] && lang[key][sub]) || (LANGS.ru[key] && LANGS.ru[key][sub]) || sub;
   return lang[key] || LANGS.ru[key] || key;
 }
- 
+
 // ================================================================
 // ВАЛЮТЫ
 // ================================================================
@@ -186,12 +186,12 @@ const CURRENCIES = {
   GBP: { symbol:'£', name:'Фунт',    flag:'🇬🇧', rate:0.00171  },
 };
 let CURRENT_CURRENCY = 'KZT';
- 
+
 // ================================================================
 // АККАУНТЫ
 // ================================================================
 let CURRENT_USER = null;
- 
+
 function getAccounts() {
   try { return JSON.parse(localStorage.getItem('mw_accounts') || '{}'); } catch { return {}; }
 }
@@ -204,7 +204,7 @@ function loadCurrentUser() {
 function setCurrentUserKey(k) {
   try { localStorage.setItem('mw_current', k || ''); } catch {}
 }
- 
+
 function defaultData() {
   return {
     transactions:[],
@@ -225,9 +225,9 @@ function defaultData() {
     }
   };
 }
- 
+
 let DATA = defaultData();
- 
+
 function saveData() {
   if (!CURRENT_USER) return;
   try {
@@ -249,7 +249,7 @@ function loadData() {
     CURRENT_LANG = localStorage.getItem('mw_lang_' + CURRENT_USER.email) || localStorage.getItem('mw_lang') || 'ru';
   } catch {}
 }
- 
+
 // ================================================================
 // УТИЛИТЫ
 // ================================================================
@@ -271,7 +271,7 @@ function catEmoji(cat) {
   };
   return m[cat]||'📦';
 }
- 
+
 // ================================================================
 // ТЕМА
 // ================================================================
@@ -282,7 +282,7 @@ function toggleTheme() {
   const btn = document.getElementById('themeToggle');
   if (btn) btn.innerHTML = `<i class="fas fa-${isDark?'sun':'moon'}"></i>`;
 }
- 
+
 // ================================================================
 // AUTH
 // ================================================================
@@ -296,7 +296,7 @@ function initAuth() {
     };
     saveAccounts(accs);
   }
- 
+
   document.querySelectorAll('.auth-tab').forEach(tab => {
     tab.addEventListener('click', function() {
       document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
@@ -307,13 +307,13 @@ function initAuth() {
       clearAuthErrors();
     });
   });
- 
+
   document.getElementById('loginBtn').addEventListener('click', doLogin);
   document.getElementById('registerBtn').addEventListener('click', doRegister);
- 
+
   document.getElementById('loginPassword').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
   document.getElementById('regPassword').addEventListener('keydown', e => { if(e.key==='Enter') doRegister(); });
- 
+
   // Check saved session
   const savedEmail = loadCurrentUser();
   if (savedEmail) {
@@ -326,11 +326,11 @@ function initAuth() {
     }
   }
 }
- 
+
 function clearAuthErrors() {
   document.querySelectorAll('.auth-error').forEach(e => e.remove());
 }
- 
+
 function showAuthError(formId, msg) {
   clearAuthErrors();
   const form = document.getElementById(formId);
@@ -339,7 +339,7 @@ function showAuthError(formId, msg) {
   err.textContent = msg;
   form.appendChild(err);
 }
- 
+
 function doLogin() {
   const email = document.getElementById('loginEmail').value.trim().toLowerCase();
   const pass  = document.getElementById('loginPassword').value;
@@ -352,7 +352,7 @@ function doLogin() {
   loadData();
   showApp();
 }
- 
+
 function doRegister() {
   const name  = document.getElementById('regName').value.trim();
   const email = document.getElementById('regEmail').value.trim().toLowerCase();
@@ -369,7 +369,7 @@ function doRegister() {
   loadData();
   showApp();
 }
- 
+
 function doLogout() {
   setCurrentUserKey(null);
   CURRENT_USER = null;
@@ -386,7 +386,7 @@ function doLogout() {
   document.getElementById('loginForm').classList.remove('hidden');
   document.getElementById('registerForm').classList.add('hidden');
 }
- 
+
 function showApp() {
   document.getElementById('authScreen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
@@ -394,7 +394,7 @@ function showApp() {
   renderAll();
   initAIChat();
 }
- 
+
 // ================================================================
 // ПРОФИЛЬ
 // ================================================================
@@ -445,14 +445,10 @@ function showProfileModal() {
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
 }
- 
+
 // ================================================================
 // ТРАНЗАКЦИИ — ПАРСЕР
 // ================================================================
-// Категории расходов и доходов
-const EXPENSE_CATS = ['Транспорт','Учёба','Здоровье','Связь/подписки','Одежда/обувь','Красота/уход','Кафе/доставка','Подарки','Развлечения','Большая покупка','Поездка/путешествие','Другое'];
-const INCOME_CATS  = ['Зарплата','Стипендия','Перевод от семьи','Другой доход'];
- 
 function parseTx(text) {
   text = text.trim();
   const nums = text.match(/\d[\d\s]*/g);
@@ -461,44 +457,35 @@ function parseTx(text) {
   if (isNaN(amount)||amount<=0) return null;
   let desc = text.replace(/\d[\d\s]*/g,'').trim() || 'Покупка';
   const lower = desc.toLowerCase();
- 
-  // Определяем тип и категорию по ключевым словам
-  const incomeMap = [
-    {kws:['зарплат','зп','salary','оклад','получил зп','получила зп'], cat:'Зарплата'},
-    {kws:['стипенд','stipend','гранд','грант'], cat:'Стипендия'},
-    {kws:['перевод от','мама','папа','родител','семья','family transfer'], cat:'Перевод от семьи'},
-    {kws:['доход','премия','аванс','кешбэк','возврат','пришло','пополнение','прибыль','выручка','income'], cat:'Другой доход'},
-  ];
-  const expenseMap = [
-    {kws:['такси','taxi','автобус','метро','бензин','заправк','транспорт','uber','яндекс','bolt','маршрутк'], cat:'Транспорт'},
-    {kws:['учёб','учеб','курс','course','книг','book','образован','универ','школ','study'], cat:'Учёба'},
-    {kws:['аптек','врач','клиник','лекарств','здоров','медиц','health','pharmacy','больниц','анализ'], cat:'Здоровье'},
-    {kws:['интернет','подписк','netflix','spotify','youtube','телефон','связь','subscription','mobile','sim'], cat:'Связь/подписки'},
-    {kws:['одежд','обувь','шопинг','clothes','shoes','shopping','платье','брюки','куртк','футболк'], cat:'Одежда/обувь'},
-    {kws:['красот','парикмахер','beauty','уход','salon','spa','маникюр','педикюр','косметик'], cat:'Красота/уход'},
-    {kws:['кофе','coffee','обед','ужин','завтрак','ресторан','суши','пицц','бургер','доставк','cafe','delivery','wolt','glovo','еда','food','столовая','фастфуд'], cat:'Кафе/доставка'},
-    {kws:['подарок','gift','праздник','present','цветы','торт'], cat:'Подарки'},
-    {kws:['кино','игр','развлеч','бар','клуб','концерт','game','cinema','party','боулинг','каток'], cat:'Развлечения'},
-    {kws:['ноутбук','laptop','телефон','phone','техник','tech','электро','айфон','самсунг','планшет','iphone','samsung'], cat:'Большая покупка'},
-    {kws:['отпуск','поездк','путешеств','авиа','отель','hotel','travel','visa','турист','билет на самолёт'], cat:'Поездка/путешествие'},
-    {kws:['квартир','аренд','коммун','жкх','свет','вода','rent','utility','газ','жильё'], cat:'Другое'},
-  ];
- 
-  let type = 'expense', category = 'Другое';
- 
-  for (const {kws,cat} of incomeMap) {
-    for (const kw of kws) { if (lower.includes(kw)) { type='income'; category=cat; break; } }
-    if (type==='income') break;
-  }
+  const incKW = ['зарплат','зп','salary','доход','премия','аванс','кешбэк','возврат','пришло','пополнение','стипендия','stipend','перевод от','transfer'];
+  let type = 'expense', category = 'Прочее';
+  for (const kw of incKW) { if (lower.includes(kw)) { type='income'; category='Зарплата'; break; } }
+  if (lower.includes('стипенд')) { type='income'; category='Стипендия'; }
   if (type==='expense') {
-    for (const {kws,cat} of expenseMap) {
+    const cats = {
+      'Еда':          ['продукт','food','groceries','азық'],
+      'Кафе/Доставка':['кофе','coffee','обед','ужин','завтрак','ресторан','суши','пицц','бургер','доставк','cafe','delivery','wolt','glovo'],
+      'Транспорт':    ['такси','taxi','бензин','заправк','транспорт','метро','автобус','uber','яндекс','bolt'],
+      'Учёба':        ['учёб','учеб','study','курс','course','книг','book','образован'],
+      'Здоровье':     ['аптек','врач','клиник','лекарств','здоров','медиц','health','pharmacy'],
+      'Связь':        ['интернет','телефон','подписк','netflix','spotify','phone','internet','subscription','связь'],
+      'Одежда':       ['одежд','обувь','шопинг','магазин','clothes','shoes','shopping'],
+      'Красота':      ['красот','парикмахер','beauty','уход','salon','spa'],
+      'Развлечения':  ['кино','игр','развлеч','бар','клуб','концерт','game','cinema','party'],
+      'Жильё':        ['квартир','аренд','коммун','жкх','свет','вода','rent','utility'],
+      'Инвестиции':   ['инвест','акци','облигац','фонд','вклад','крипт','invest'],
+      'Подарки':      ['подарок','gift','праздник','present'],
+      'Большая покупка':['телефон','ноутбук','phone','laptop','техник','tech','электро'],
+      'Путешествие':  ['отпуск','поездк','путешеств','авиа','отель','hotel','travel','visa'],
+    };
+    for (const [cat,kws] of Object.entries(cats)) {
       for (const kw of kws) { if (lower.includes(kw)) { category=cat; break; } }
-      if (category!=='Другое') break;
+      if (category!=='Прочее') break;
     }
   }
   return { text: desc.charAt(0).toUpperCase()+desc.slice(1), amount, type, category, date:Date.now() };
 }
- 
+
 function addTransaction(raw, cardId=null) {
   const parsed = parseTx(raw);
   if (!parsed) { alert('❌ Формат: "Кофе 350" или "Зарплата 200000"'); return false; }
@@ -511,7 +498,7 @@ function addTransaction(raw, cardId=null) {
   renderHeader(); renderActiveTab(_activeTab);
   return true;
 }
- 
+
 // ================================================================
 // КАРТЫ
 // ================================================================
@@ -530,7 +517,7 @@ function deleteCard(id) {
   DATA.transactions.forEach(t=>{if(t.cardId===id)t.cardId=null;});
   saveData(); renderActiveTab(_activeTab);
 }
- 
+
 // ================================================================
 // ЦЕЛИ
 // ================================================================
@@ -549,7 +536,7 @@ function contributeGoal(id, amount) {
   DATA.transactions.push({ id:DATA.nextTxId++, text:`Вклад: ${g.name}`, amount, type:'expense', category:'Инвестиции', cardId:null, date:Date.now() });
   checkAchievements(); saveData(); renderGoalsList(); renderHeader();
 }
- 
+
 // ================================================================
 // ГЕЙМИФИКАЦИЯ
 // ================================================================
@@ -586,7 +573,7 @@ function getRankInfo() {
   for(let i=ranks.length-1;i>=0;i--){if(DATA.xp>=ranks[i].xp){cur=ranks[i];nxt=ranks[i+1]||null;break;}}
   return {current:cur,next:nxt};
 }
- 
+
 // ================================================================
 // ЭКСПОРТ
 // ================================================================
@@ -604,7 +591,7 @@ function exportReport() {
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`MyWay_${Date.now()}.txt`; a.click(); URL.revokeObjectURL(a.href);
 }
- 
+
 // ================================================================
 // НАВИГАЦИЯ
 // ================================================================
@@ -616,11 +603,12 @@ const TAB_DEFS = [
   {id:'stats',        icon:'fa-chart-bar'},
   {id:'goals',        icon:'fa-bullseye'},
   {id:'gamification', icon:'fa-gamepad'},
+  {id:'ai',           icon:'fa-robot'},
 ];
 let _activeTab = 'dashboard';
- 
+
 function renderAll() { renderNav(); renderSidebarUser(); renderHeader(); renderDashboard(); renderFooter(); initMobileToggle(); }
- 
+
 function renderNav() {
   const nav=document.getElementById('nav');
   nav.innerHTML=TAB_DEFS.map(({id,icon})=>`
@@ -636,7 +624,7 @@ function renderNav() {
     });
   });
 }
- 
+
 function renderSidebarUser() {
   const el=document.getElementById('sidebarUser'); if(!el)return;
   el.innerHTML=`
@@ -648,7 +636,7 @@ function renderSidebarUser() {
     <i class="fas fa-chevron-right" style="font-size:11px;color:var(--text3);"></i>`;
   el.onclick=showProfileModal;
 }
- 
+
 function renderHeader() {
   const ti=DATA.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const te=DATA.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
@@ -686,15 +674,15 @@ function renderHeader() {
   const mt=document.getElementById('menuToggle');
   if(mt) mt.addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
 }
- 
+
 function initMobileToggle() {
   document.addEventListener('click',e=>{
     const sb=document.getElementById('sidebar');
     if(sb&&sb.classList.contains('open')&&!sb.contains(e.target)&&!e.target.closest('#menuToggle'))
       sb.classList.remove('open');
-  },{once:false});
+  });
 }
- 
+
 function renderActiveTab(tab) {
   switch(tab){
     case 'dashboard':    renderDashboard(); break;
@@ -704,10 +692,11 @@ function renderActiveTab(tab) {
     case 'stats':        renderStatsTab(); break;
     case 'goals':        renderGoalsTab(); break;
     case 'gamification': renderGamificationTab(); break;
+    case 'ai':           renderAITab(); break;
     default:             renderDashboard();
   }
 }
- 
+
 function renderFooter() {
   document.getElementById('footer').innerHTML=`
     <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);">
@@ -716,7 +705,7 @@ function renderFooter() {
     </div>
     <div style="font-size:12px;color:var(--text3);">My Way v4.0 · ${CURRENT_USER.email}</div>`;
 }
- 
+
 // ================================================================
 // ДАШБОРД
 // ================================================================
@@ -726,7 +715,7 @@ function renderDashboard() {
   const bal=inc-exp;
   const savePct = inc>0 ? Math.round((bal/inc)*100) : 0;
   const activeGoal = DATA.goals.find(g=>g.id===DATA.activeGoalId);
- 
+
   document.getElementById('content').innerHTML=`
     <div class="grid-3" style="gap:16px;margin-bottom:16px;">
       <div class="card">
@@ -740,7 +729,7 @@ function renderDashboard() {
           <span style="color:var(--red);"><i class="fas fa-arrow-down"></i> ${fmt(exp)}</span>
         </div>
       </div>
- 
+
       <div class="card">
         <div class="card-label"><i class="fas fa-chart-pie"></i> Статистика</div>
         <div style="margin-top:8px;">
@@ -762,7 +751,7 @@ function renderDashboard() {
           </div>
         </div>
       </div>
- 
+
       <div class="card">
         <div class="card-label"><i class="fas fa-bullseye"></i> Активная цель</div>
         ${activeGoal ? `
@@ -777,7 +766,7 @@ function renderDashboard() {
           </div>` : `<div style="text-align:center;padding:20px;color:var(--text3);">Нет активной цели</div>`}
       </div>
     </div>
- 
+
     <div class="grid-2" style="gap:16px;margin-bottom:16px;">
       <div class="card">
         <div class="card-label"><i class="fas fa-bolt"></i> Быстрые действия</div>
@@ -788,7 +777,7 @@ function renderDashboard() {
           <button class="btn btn-warning" id="qExport"><i class="fas fa-file-export"></i> Экспорт</button>
         </div>
       </div>
- 
+
       <div class="card">
         <div class="card-label"><i class="fas fa-credit-card"></i> Мои карты</div>
         ${DATA.cards.length===0
@@ -801,12 +790,12 @@ function renderDashboard() {
               </div>`).join('')}</div>`}
       </div>
     </div>
- 
+
     <div class="card">
       <div class="card-label"><i class="fas fa-clock"></i> Последние операции</div>
       <div class="tx-list" id="dashTxList"></div>
     </div>`;
- 
+
   const list=document.getElementById('dashTxList');
   const recent=[...DATA.transactions].reverse().slice(0,6);
   list.innerHTML=recent.map(t=>{
@@ -821,7 +810,7 @@ function renderDashboard() {
       <div class="tx-amount ${t.type}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</div>
     </div>`;
   }).join('')||'<div style="text-align:center;padding:20px;color:var(--text3);">Нет операций</div>';
- 
+
   document.getElementById('qIncome').addEventListener('click',()=>{
     const v=prompt('Сумма дохода (₸):'); if(v&&parseInt(v)>0) addTransaction(`Доход ${parseInt(v)}`);
   });
@@ -831,38 +820,21 @@ function renderDashboard() {
   document.getElementById('qCard').addEventListener('click',()=>{ document.querySelector('[data-tab="cards"]').click(); });
   document.getElementById('qExport').addEventListener('click',exportReport);
 }
- 
+
 // ================================================================
 // ТРАНЗАКЦИИ
 // ================================================================
 function renderTransactionsTab() {
   const cardOpts=DATA.cards.map(c=>`<option value="${c.id}">${c.bank} **** ${c.number}</option>`).join('');
-  const expCatOpts = EXPENSE_CATS.map(c=>`<option value="${c}">${c}</option>`).join('');
-  const incCatOpts = INCOME_CATS.map(c=>`<option value="${c}">${c}</option>`).join('');
   document.getElementById('content').innerHTML=`
     <div class="card" style="margin-bottom:16px;">
       <div class="card-label"><i class="fas fa-plus-circle"></i> ${t('txTitle')}</div>
-      <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="form-group"><label>${CURRENT_LANG==='kz'?'Сипаттама':CURRENT_LANG==='en'?'Description':'Описание'}</label>
-          <input type="text" id="txInput" placeholder="${t('txPh')}"/>
-        </div>
-        <div class="form-group"><label>${CURRENT_LANG==='kz'?'Сомасы':CURRENT_LANG==='en'?'Amount':'Сумма (₸)'}</label>
-          <input type="number" id="txAmount" placeholder="0" min="1"/>
-        </div>
-        <div class="form-group"><label>${CURRENT_LANG==='kz'?'Түрі':CURRENT_LANG==='en'?'Type':'Тип'}</label>
-          <select id="txType">
-            <option value="expense">${t('expenses')}</option>
-            <option value="income">${t('incomes')}</option>
-          </select>
-        </div>
-        <div class="form-group"><label>${CURRENT_LANG==='kz'?'Санат':CURRENT_LANG==='en'?'Category':'Категория'}</label>
-          <select id="txCat">${expCatOpts}</select>
-        </div>
-        ${DATA.cards.length?`<div class="form-group" style="grid-column:1/-1;"><label>${CURRENT_LANG==='kz'?'Карта':CURRENT_LANG==='en'?'Card':'Карта'}</label>
-          <select id="txCardSel"><option value="">—</option>${cardOpts}</select>
-        </div>`:''}
+      <div class="input-group" style="margin-top:10px;">
+        <input type="text" id="txInput" placeholder="${t('txPh')}"/>
+        ${DATA.cards.length?`<select id="txCardSel" style="max-width:200px;"><option value="">—</option>${cardOpts}</select>`:''}
+        <button class="btn btn-success" id="txAddBtn"><i class="fas fa-plus"></i> ${t('addBtn')}</button>
+        <button class="btn btn-danger btn-sm" id="txClearBtn"><i class="fas fa-trash"></i></button>
       </div>
-      <button class="btn btn-success w-full" id="txAddBtn" style="margin-top:4px;"><i class="fas fa-plus"></i> ${t('addBtn')}</button>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
         ${t('quickTemplates').map(([l,v])=>`<button class="btn btn-outline btn-sm template" data-text="${v}">${l}</button>`).join('')}
       </div>
@@ -878,7 +850,7 @@ function renderTransactionsTab() {
       </div>
       <div class="tx-list" id="fullTxList"></div>
     </div>`;
- 
+
   document.getElementById('txAddBtn').addEventListener('click',()=>{
     const v=document.getElementById('txInput').value.trim();
     const s=document.getElementById('txCardSel');
@@ -901,7 +873,7 @@ function renderTransactionsTab() {
   });
   renderFullTxList('all');
 }
- 
+
 function renderFullTxList(f) {
   const list=document.getElementById('fullTxList'); if(!list)return;
   const arr=f==='all'?DATA.transactions:DATA.transactions.filter(t=>t.type===f);
@@ -930,7 +902,7 @@ function renderFullTxList(f) {
     });
   });
 }
- 
+
 // ================================================================
 // КАРТЫ
 // ================================================================
@@ -943,7 +915,7 @@ const CARD_COLORS = {
   dark:   'linear-gradient(135deg,#0f172a,#1e293b)',
   gold:   'linear-gradient(135deg,#b45309,#f59e0b)',
 };
- 
+
 function renderCardsTab() {
   document.getElementById('content').innerHTML=`
     <div class="grid-2" style="gap:16px;margin-bottom:16px;">
@@ -983,7 +955,7 @@ function renderCardsTab() {
           </button>
         </div>
       </div>
- 
+
       <div class="card" id="cardPreviewCard">
         <div class="card-label"><i class="fas fa-eye"></i> Предпросмотр</div>
         <div style="margin-top:16px;">
@@ -1008,14 +980,14 @@ function renderCardsTab() {
         </div>
       </div>
     </div>
- 
+
     <div class="card">
       <div class="card-header">
         <div class="card-label"><i class="fas fa-credit-card"></i> Мои карты (${DATA.cards.length})</div>
       </div>
       <div class="cards-grid" id="cardsList"></div>
     </div>`;
- 
+
   // Live preview
   let selColor='purple';
   const upd=()=>{
@@ -1047,16 +1019,16 @@ function renderCardsTab() {
     });
   });
   document.querySelector('.color-dot').classList.add('selected');
- 
+
   document.getElementById('addCardBtn').addEventListener('click',()=>{
     addCard(document.getElementById('cNum').value,document.getElementById('cHolder').value,
       document.getElementById('cExpiry').value,document.getElementById('cBank').value,
       document.getElementById('cType').value,selColor);
   });
- 
+
   renderCardsList();
 }
- 
+
 function renderCardsList() {
   const list=document.getElementById('cardsList'); if(!list)return;
   if(!DATA.cards.length){
@@ -1112,7 +1084,7 @@ function renderCardsList() {
       </button>
     </div>`;
   }).join('');
- 
+
   list.querySelectorAll('.card-delete-btn').forEach(b=>{
     b.addEventListener('click',()=>deleteCard(parseInt(b.dataset.id)));
   });
@@ -1123,7 +1095,7 @@ function renderCardsList() {
     });
   });
 }
- 
+
 // ================================================================
 // СТАТИСТИКА
 // ================================================================
@@ -1131,13 +1103,13 @@ function renderStatsTab() {
   const inc=DATA.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const exp=DATA.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
   const bal=inc-exp;
- 
+
   // Категории
   const catData={};
   DATA.transactions.filter(t=>t.type==='expense').forEach(t=>{catData[t.category]=(catData[t.category]||0)+t.amount;});
   const cats=Object.entries(catData).sort((a,b)=>b[1]-a[1]);
   const maxCat=cats[0]?.[1]||1;
- 
+
   // 7 дней
   const dayData={};
   for(let i=6;i>=0;i--){
@@ -1152,7 +1124,7 @@ function renderStatsTab() {
   });
   const days=Object.entries(dayData);
   const maxDay=Math.max(...days.map(([,v])=>Math.max(v.income,v.expense)),1);
- 
+
   document.getElementById('content').innerHTML=`
     <div class="grid-3" style="gap:16px;margin-bottom:16px;">
       <div class="card">
@@ -1175,7 +1147,7 @@ function renderStatsTab() {
           ${inc>0?`<div style="margin-top:10px;font-size:12px;color:var(--text3);text-align:center;">Норма сбережений: <strong style="color:var(--accent2);">${Math.round(bal/inc*100)}%</strong></div>`:''}
         </div>
       </div>
- 
+
       <div class="card">
         <div class="card-label"><i class="fas fa-globe"></i> Мультивалюта</div>
         <div class="currency-table" style="margin-top:10px;">
@@ -1192,7 +1164,7 @@ function renderStatsTab() {
             </div>`).join('')}
         </div>
       </div>
- 
+
       <div class="card">
         <div class="card-label"><i class="fas fa-credit-card"></i> Расходы по картам</div>
         <div style="margin-top:10px;">
@@ -1212,7 +1184,7 @@ function renderStatsTab() {
         </div>
       </div>
     </div>
- 
+
     <div class="card" style="margin-bottom:16px;">
       <div class="card-label"><i class="fas fa-chart-bar"></i> Доходы и расходы по дням (7 дней)</div>
       <div class="bar-chart" style="margin-top:16px;height:130px;">
@@ -1230,7 +1202,7 @@ function renderStatsTab() {
         <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--red);margin-right:4px;"></span>Расходы</span>
       </div>
     </div>
- 
+
     <div class="card">
       <div class="card-label"><i class="fas fa-tags"></i> Расходы по категориям</div>
       <div style="margin-top:12px;">
@@ -1251,7 +1223,7 @@ function renderStatsTab() {
       </div>
     </div>`;
 }
- 
+
 // ================================================================
 // ЦЕЛИ
 // ================================================================
@@ -1281,7 +1253,7 @@ function renderGoalsTab() {
   });
   renderGoalsList();
 }
- 
+
 function renderGoalsList() {
   const list=document.getElementById('goalsList'); if(!list)return;
   list.innerHTML=DATA.goals.map(g=>{
@@ -1331,7 +1303,7 @@ function renderGoalsList() {
   });
   renderRoadmap();
 }
- 
+
 function renderRoadmap() {
   const g=DATA.goals.find(x=>x.id===DATA.activeGoalId);
   const d=document.getElementById('roadmap'); if(!d)return;
@@ -1355,7 +1327,7 @@ function renderRoadmap() {
       ${pct>=100?`<div style="margin-top:12px;font-size:14px;color:var(--green);">${t('goalDone')}</div>`:''}
     </div>`;
 }
- 
+
 // ================================================================
 // ДЕПОЗИТЫ / DEPOSITS
 // ================================================================
@@ -1365,13 +1337,13 @@ function addDeposit(name, amount, rate, months) {
   DATA.deposits.push({ id:Date.now(), name, amount, rate, months, income, createdAt:Date.now() });
   saveData(); renderDepositsTab();
 }
- 
+
 function deleteDeposit(id) {
   if (!confirm(t('deleteDeposit'))) return;
   DATA.deposits = DATA.deposits.filter(d=>d.id!==id);
   saveData(); renderDepositsTab();
 }
- 
+
 function renderDepositsTab() {
   if (!DATA.deposits) DATA.deposits = [];
   const totalDep = DATA.deposits.reduce((s,d)=>s+d.amount,0);
@@ -1417,7 +1389,7 @@ function renderDepositsTab() {
       </div>
       <div id="depositsList"></div>
     </div>`;
- 
+
   document.getElementById('depAddBtn').addEventListener('click',()=>{
     addDeposit(
       document.getElementById('depName').value.trim(),
@@ -1426,7 +1398,7 @@ function renderDepositsTab() {
       parseInt(document.getElementById('depMonths').value)||0
     );
   });
- 
+
   const dlist = document.getElementById('depositsList');
   if (!DATA.deposits.length) {
     dlist.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3);">${t('noDeposits')}</div>`;
@@ -1457,7 +1429,7 @@ function renderDepositsTab() {
     b.addEventListener('click',()=>deleteDeposit(parseInt(b.dataset.id)));
   });
 }
- 
+
 // ================================================================
 // ГЕЙМИФИКАЦИЯ
 // ================================================================
@@ -1493,7 +1465,7 @@ function renderGamificationTab() {
     </div>`;
   renderQuests(); renderAchievements();
 }
- 
+
 function renderQuests() {
   const l=document.getElementById('questsList'); if(!l)return;
   l.innerHTML=DATA.quests.map(q=>`
@@ -1505,7 +1477,7 @@ function renderQuests() {
     </div>`).join('');
   l.querySelectorAll('.quest-btn').forEach(b=>b.addEventListener('click',()=>completeQuest(parseInt(b.dataset.id))));
 }
- 
+
 function renderAchievements() {
   const g=document.getElementById('achievementsGrid'); if(!g)return;
   const list=[
@@ -1521,7 +1493,7 @@ function renderAchievements() {
       <span class="ach-name">${DATA.achievements[a.key]?a.name:'🔒'}</span>
     </div>`).join('');
 }
- 
+
 // ================================================================
 // ИИ-СОВЕТНИК (ВКЛАДКА)
 // ================================================================
@@ -1532,7 +1504,7 @@ function renderAITab() {
   const cats={};
   DATA.transactions.filter(t=>t.type==='expense').forEach(t=>{cats[t.category]=(cats[t.category]||0)+t.amount;});
   const topCat=Object.entries(cats).sort((a,b)=>b[1]-a[1])[0];
- 
+
   document.getElementById('content').innerHTML=`
     <div class="grid-2" style="gap:16px;margin-bottom:16px;">
       <div class="card">
@@ -1551,7 +1523,7 @@ function renderAITab() {
           <i class="fas fa-sync-alt"></i> Обновить анализ
         </button>
       </div>
- 
+
       <div class="card">
         <div class="card-label"><i class="fas fa-lightbulb"></i> Быстрые советы</div>
         <div id="aiTips" style="margin-top:10px;">
@@ -1561,7 +1533,7 @@ function renderAITab() {
         </div>
       </div>
     </div>
- 
+
     <div class="card">
       <div class="card-label"><i class="fas fa-comments"></i> Финансовый консультант</div>
       <div style="font-size:12px;color:var(--text3);margin:6px 0 12px;">Задайте вопрос об управлении деньгами, накоплениях, достижении целей</div>
@@ -1579,13 +1551,13 @@ function renderAITab() {
           .map(q=>`<button class="btn btn-outline btn-sm ai-quick" data-q="${q}">${q}</button>`).join('')}
       </div>
     </div>`;
- 
+
   // Load analysis
   runAIAnalysis();
   loadAITips();
- 
+
   document.getElementById('refreshAnalysis').addEventListener('click', runAIAnalysis);
- 
+
   const tabSend=()=>{
     const inp=document.getElementById('aiTabInput');
     const msg=inp.value.trim(); if(!msg)return;
@@ -1601,7 +1573,7 @@ function renderAITab() {
     });
   });
 }
- 
+
 function appendAITabMsg(text, role) {
   const msgs=document.getElementById('aiTabMessages'); if(!msgs)return null;
   const div=document.createElement('div');
@@ -1611,7 +1583,7 @@ function appendAITabMsg(text, role) {
   msgs.scrollTop=msgs.scrollHeight;
   return div;
 }
- 
+
 async function runAIAnalysis() {
   const box=document.getElementById('aiLifeAnalysis'); if(!box)return;
   box.innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:14px;background:var(--bg3);border-radius:var(--r-sm);">
@@ -1640,7 +1612,7 @@ async function runAIAnalysis() {
     box.innerHTML=`<div class="ai-insights">${generateLocalAnalysis()}</div>`;
   }
 }
- 
+
 async function loadAITips() {
   const box=document.getElementById('aiTips'); if(!box)return;
   const context = buildFinancialContext();
@@ -1667,7 +1639,7 @@ async function loadAITips() {
       <div style="display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:var(--r-sm);background:var(--bg3);border:1px solid var(--border);margin-bottom:6px;font-size:13px;line-height:1.5;">${t}</div>`).join('');
   }
 }
- 
+
 function buildFinancialContext() {
   const inc=DATA.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const exp=DATA.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
@@ -1677,7 +1649,7 @@ function buildFinancialContext() {
   const goals=DATA.goals.map(g=>`${g.name}: ${Math.round(g.saved/g.target*100)}%`).join(', ');
   return `Доходы: ${inc.toLocaleString()}₸, Расходы: ${exp.toLocaleString()}₸, Баланс: ${(inc-exp).toLocaleString()}₸. Топ расходы: ${topCats||'нет'}. Карт: ${DATA.cards.length}. Цели: ${goals||'нет'}. Уровень: ${DATA.level}, XP: ${DATA.xp}.`;
 }
- 
+
 function generateLocalAnalysis() {
   const inc=DATA.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const exp=DATA.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
@@ -1686,7 +1658,7 @@ function generateLocalAnalysis() {
     <p>📊 <strong>Расходы:</strong> Всего ${DATA.transactions.filter(t=>t.type==='expense').length} трат на сумму ${exp.toLocaleString()}₸. Следите за категориями.</p>
     <p>🎯 <strong>Цели:</strong> ${DATA.goals.length>0?`У вас ${DATA.goals.length} активных целей. Продолжайте пополнять регулярно!`:'Создайте финансовую цель — это мотивирует!'}</p>`;
 }
- 
+
 function generateLocalTips() {
   const inc=DATA.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const exp=DATA.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
@@ -1697,12 +1669,12 @@ function generateLocalTips() {
     `📊 Ваш баланс: ${(inc-exp).toLocaleString()}₸. ${inc>exp?'Вы в плюсе — отличная работа!':'Сократите расходы хотя бы на 10%'}`,
   ];
 }
- 
+
 // ================================================================
 // ИИ ЧАТ (ПУЗЫРЁК)
 // ================================================================
 let _aiHistory = [];
- 
+
 function initAIChat() {
   const bubble=document.getElementById('aiChatBubble');
   const toggle=document.getElementById('aiChatToggle');
@@ -1710,11 +1682,11 @@ function initAIChat() {
   const send=document.getElementById('aiChatSend');
   const input=document.getElementById('aiChatInput');
   const chatWindow=document.querySelector('.ai-chat-window');
- 
+
   if(!toggle)return;
   bubble.classList.remove('hidden');
   if(chatWindow) chatWindow.style.display='none';
- 
+
   toggle.addEventListener('click',()=>{
     if(!chatWindow)return;
     const visible=chatWindow.style.display!=='none';
@@ -1722,7 +1694,7 @@ function initAIChat() {
     if(!visible) chatWindow.style.flexDirection='column';
   });
   if(close) close.addEventListener('click',()=>{ if(chatWindow) chatWindow.style.display='none'; });
- 
+
   const doSend=()=>{
     const msg=input.value.trim(); if(!msg)return;
     input.value='';
@@ -1732,7 +1704,7 @@ function initAIChat() {
   send.addEventListener('click',doSend);
   input.addEventListener('keydown',e=>{if(e.key==='Enter')doSend();});
 }
- 
+
 function addBubbleMsgUser(text) {
   const msgs=document.getElementById('aiChatMessages');
   const d=document.createElement('div');
@@ -1740,19 +1712,19 @@ function addBubbleMsgUser(text) {
   d.innerHTML=`<div class="ai-msg-bubble">${text}</div>`;
   msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
 }
- 
+
 async function sendAIMsg(userMsg, container) {
   // Typing
   const typing=document.createElement('div');
   typing.className='ai-msg ai-msg-bot';
   typing.innerHTML=`<div class="ai-msg-typing"><div class="ai-typing-dot"></div><div class="ai-typing-dot"></div><div class="ai-typing-dot"></div></div>`;
   container.appendChild(typing); container.scrollTop=container.scrollHeight;
- 
+
   _aiHistory.push({role:'user',content:userMsg});
- 
+
   const context=buildFinancialContext();
   const sysPrompt=`You are a financial AI advisor in the My Way app. Help user ${CURRENT_USER.name} manage finances. Context: ${context}. Reply in ${CURRENT_LANG==='kz'?'Kazakh':CURRENT_LANG==='en'?'English':'Russian'}, concisely (2-4 sentences), use emojis. Give personalized advice.`;
- 
+
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
@@ -1781,7 +1753,7 @@ async function sendAIMsg(userMsg, container) {
     container.appendChild(d); container.scrollTop=container.scrollHeight;
   }
 }
- 
+
 function getLocalAIResponse(msg) {
   const inc=DATA.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const exp=DATA.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
@@ -1796,3 +1768,8 @@ function getLocalAIResponse(msg) {
     return '📈 Начните с создания подушки безопасности (3-6 зарплат), затем рассмотрите ETF-фонды или депозиты. Диверсифицируйте вложения!';
   return `💡 Ваш баланс: ${(inc-exp).toLocaleString()}₸. Норма сбережений: ${inc>0?Math.round((inc-exp)/inc*100):0}%. Могу помочь с планированием бюджета, целями или советами по экономии!`;
 }
+
+// ================================================================
+// ЗАПУСК
+// ================================================================
+initAuth();
