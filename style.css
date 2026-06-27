@@ -306,3 +306,50 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-hei
   .ai-window{width:calc(100vw - 44px);}
   .auth-box{padding:26px 22px 22px;}
 }
+/* ═══ SUBSCRIPTION / PAYWALL ═══ */
+.paywall-box {
+  max-width: 400px;
+  padding: 24px 22px;
+}
+.paywall-box .plan-tab {
+  transition: all .2s;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes popIn {
+  from { transform: scale(.5); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* Trial banner in topbar */
+.trial-badge {
+  background: rgba(16,185,129,.12);
+  color: var(--green);
+  border: 1px solid rgba(16,185,129,.2);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  transition: all .15s;
+}
+.trial-badge:hover { background: rgba(16,185,129,.22); }
+
+/* Paywall card input focus */
+.paywall-box input:focus {
+  border-color: var(--acc) !important;
+  box-shadow: 0 0 0 2px var(--accg) !important;
+  outline: none;
+}
+
+/* Expired trial overlay on premium tabs */
+.premium-lock-banner {
+  background: linear-gradient(135deg, rgba(244,63,94,.08), rgba(124,58,237,.06));
+  border: 1px solid rgba(124,58,237,.25);
+  border-radius: var(--r);
+  padding: 16px;
+  text-align: center;
+  margin-bottom: 14px;
+}
