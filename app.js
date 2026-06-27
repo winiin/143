@@ -1046,7 +1046,7 @@ function renderDashboard() {
   const activeGoal=DATA.goals.find(g=>g.id===DATA.activeGoalId);
 
   document.getElementById('content').innerHTML=`
-    <div class="g3" style="margin-bottom:14px;">
+    <div class="grid3" style="margin-bottom:14px;">
       <div class="card">
         <div class="clbl"><i class="fas fa-wallet"></i> ${t('balance')}</div>
         <div style="text-align:center;padding:10px 0 6px;">
@@ -1200,7 +1200,7 @@ function renderFullTxList(f) {
 // ── CARDS TAB ──────────────────────────
 function renderCardsTab() {
   document.getElementById('content').innerHTML=`
-    <div class="g2" style="margin-bottom:14px;">
+    <div class="grid2" style="margin-bottom:14px;">
       <div class="card">
         <div class="clbl"><i class="fas fa-plus-circle"></i> ${t('addCard')}</div>
         <div style="margin-top:12px;">
@@ -1353,7 +1353,7 @@ function renderStatsTab() {
   const monthArr=Object.entries(monthMap).sort(([a],[b])=>a.localeCompare(b)).slice(-6);
 
   document.getElementById('content').innerHTML=`
-    <div class="g3" style="margin-bottom:14px;">
+    <div class="grid3" style="margin-bottom:14px;">
       <div class="card">
         <div class="clbl"><i class="fas fa-chart-pie"></i> ${t('stats')}</div>
         <div style="margin-top:10px;">
@@ -1412,7 +1412,7 @@ function renderStatsTab() {
       </div>
     </div>
 
-    <div class="g2" style="margin-bottom:14px;">
+    <div class="grid2" style="margin-bottom:14px;">
       <div class="card">
         <div class="clbl"><i class="fas fa-tags"></i> ${t('byCat')}</div>
         <div style="margin-top:10px;">
@@ -1549,7 +1549,7 @@ function renderDepositsTab() {
       </div>
       <button class="btn btn-primary wf" id="dAddBtn"><i class="fas fa-plus"></i> ${t('addDep')}</button>
     </div>
-    ${DATA.deposits.length?`<div class="g2" style="margin-bottom:14px;">
+    ${DATA.deposits.length?`<div class="grid2" style="margin-bottom:14px;">
       <div class="card"><div class="clbl"><i class="fas fa-coins"></i> ${t('depAmt')}</div>
         <div style="font-size:26px;font-weight:800;color:var(--acc2);margin-top:7px;">${fmtAmt(totAmt)}</div>
       </div>
@@ -1599,7 +1599,7 @@ function renderGamTab() {
   const ri=getRankInfo();
   const xpPct=ri.next?Math.min(100,Math.round(DATA.xp/ri.next.xp*100)):100;
   document.getElementById('content').innerHTML=`
-    <div class="g2" style="margin-bottom:14px;">
+    <div class="grid2" style="margin-bottom:14px;">
       <div class="card" style="text-align:center;">
         <div class="clbl" style="justify-content:center;"><i class="fas fa-crown"></i> Ранг</div>
         <div style="font-size:64px;margin:8px 0;">${ri.current.icon}</div>
@@ -1644,7 +1644,7 @@ function renderAch() {
 // ── AI TAB ─────────────────────────────
 function renderAITab() {
   document.getElementById('content').innerHTML=`
-    <div class="g2" style="margin-bottom:14px;">
+    <div class="grid2" style="margin-bottom:14px;">
       <div class="card">
         <div class="card-hdr">
           <div class="clbl"><i class="fas fa-chart-line"></i> ${t('aiAnalysis')}</div>
@@ -1861,7 +1861,7 @@ function renderTipsTab() {
       <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;margin-bottom:4px;">${t('tipsTitle')}</div>
       <div style="font-size:12px;color:var(--tx3);">${t('tipsDesc')}</div>
     </div>
-    <div class="g2">
+    <div class="grid2">
       ${wisdomTips.map(w=>`
         <div class="card" style="border-left:3px solid var(--acc);cursor:default;transition:transform .15s;" onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform='translateY(0)'">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
@@ -1970,4 +1970,3 @@ function renderImportTab() {
 
 // ── BOOT ───────────────────────────────
 initAuth();
-JSEOF

@@ -97,8 +97,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-hei
 .card-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:6px;}
 .clbl{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--tx3);}
 .clbl i{color:var(--acc2);font-size:12px;}
-.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
-.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
 
 /* ═══ BUTTONS ═══ */
 .btn{padding:9px 16px;border:none;border-radius:var(--rsm);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .16s;display:inline-flex;align-items:center;gap:6px;}
@@ -298,7 +298,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-hei
   .topbar{padding:0 14px;}
 }
 @media(max-width:600px){
-  .g3,.g2{grid-template-columns:1fr;}
+  .grid3,.grid2{grid-template-columns:1fr;}
   .bal-amount{font-size:30px;}
   .ach-grid{grid-template-columns:repeat(3,1fr);}
   .topbar-r .badge{display:none;}
