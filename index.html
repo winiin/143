@@ -1,156 +1,132 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Way — Финансы</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Way</title>
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
 
-<!-- ═══════════════ ЭКРАН АВТОРИЗАЦИИ ═══════════════ -->
+<!-- ══ AUTH ══ -->
 <div id="authScreen" class="auth-screen">
-    <div class="auth-glow auth-glow-1"></div>
-    <div class="auth-glow auth-glow-2"></div>
-    <div class="auth-glow auth-glow-3"></div>
-
-    <div class="auth-box">
-        <!-- SVG LOGO -->
-        <div class="auth-logo">
-            <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="lg1" x1="0" y1="0" x2="52" y2="52" gradientUnits="userSpaceOnUse">
-                        <stop offset="0%" stop-color="#7c3aed"/>
-                        <stop offset="100%" stop-color="#06b6d4"/>
-                    </linearGradient>
-                    <filter id="glow">
-                        <feGaussianBlur stdDeviation="2.5" result="blur"/>
-                        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                    </filter>
-                </defs>
-                <rect width="52" height="52" rx="14" fill="url(#lg1)"/>
-                <!-- M path -->
-                <path d="M10 36 L10 18 L18 28 L26 18 L26 36" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow)"/>
-                <!-- W path -->
-                <path d="M28 18 L32 32 L36 24 L40 32 L44 18" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow)"/>
-                <!-- dot accent -->
-                <circle cx="40" cy="36" r="3" fill="#06b6d4"/>
-            </svg>
-            <div>
-                <div class="auth-logo-title">My Way</div>
-                <div class="auth-logo-sub">Твой финансовый путь</div>
-            </div>
-        </div>
-
-        <div class="auth-tabs">
-            <button class="auth-tab active" data-auth="login">Войти</button>
-            <button class="auth-tab" data-auth="register">Регистрация</button>
-        </div>
-
-        <div id="loginForm" class="auth-form">
-            <div class="form-field">
-                <i class="fas fa-envelope field-icon"></i>
-                <input type="email" id="loginEmail" placeholder="Email" autocomplete="email"/>
-            </div>
-            <div class="form-field">
-                <i class="fas fa-lock field-icon"></i>
-                <input type="password" id="loginPassword" placeholder="Пароль" autocomplete="current-password"/>
-            </div>
-            <button class="btn btn-primary w-full" id="loginBtn">
-                <i class="fas fa-sign-in-alt"></i> Войти
-            </button>
-            <div class="auth-hint"><i class="fas fa-circle-info"></i> Демо: demo@myway.kz / demo123</div>
-        </div>
-
-        <div id="registerForm" class="auth-form hidden">
-            <div class="form-field">
-                <i class="fas fa-user field-icon"></i>
-                <input type="text" id="regName" placeholder="Ваше имя" autocomplete="name"/>
-            </div>
-            <div class="form-field">
-                <i class="fas fa-envelope field-icon"></i>
-                <input type="email" id="regEmail" placeholder="Email" autocomplete="email"/>
-            </div>
-            <div class="form-field">
-                <i class="fas fa-lock field-icon"></i>
-                <input type="password" id="regPassword" placeholder="Пароль (мин. 6 символов)" autocomplete="new-password"/>
-            </div>
-            <button class="btn btn-primary w-full" id="registerBtn">
-                <i class="fas fa-user-plus"></i> Создать аккаунт
-            </button>
-        </div>
+  <div class="auth-glow g1"></div>
+  <div class="auth-glow g2"></div>
+  <div class="auth-box">
+    <!-- LOGO SVG -->
+    <div class="auth-logo">
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#7c3aed"/>
+            <stop offset="100%" stop-color="#06b6d4"/>
+          </linearGradient>
+        </defs>
+        <rect width="48" height="48" rx="14" fill="url(#lg)"/>
+        <path d="M9 34 L9 17 L17 27 L24 17 L24 34" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M26 17 L30 30 L34 22 L38 30 L42 17" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="38" cy="35" r="3" fill="#06b6d4"/>
+      </svg>
+      <div>
+        <div class="auth-logo-name">My Way</div>
+        <div class="auth-logo-sub" id="authSub">Твой финансовый путь</div>
+      </div>
     </div>
+
+    <!-- LANG PICKER on auth -->
+    <div class="auth-lang-row">
+      <button class="lang-pill active" data-l="ru">🇷🇺 RU</button>
+      <button class="lang-pill" data-l="kz">🇰🇿 KZ</button>
+      <button class="lang-pill" data-l="en">🇬🇧 EN</button>
+    </div>
+
+    <!-- TABS -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-auth="login" id="tabLogin">Войти</button>
+      <button class="auth-tab" data-auth="register" id="tabRegister">Регистрация</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginForm" class="auth-form">
+      <div class="fld"><i class="fas fa-envelope fi"></i><input type="email" id="loginEmail" placeholder="Email" autocomplete="email"/></div>
+      <div class="fld"><i class="fas fa-lock fi"></i><input type="password" id="loginPassword" placeholder="Пароль" autocomplete="current-password"/></div>
+      <button class="btn btn-primary wf" id="loginBtn"><i class="fas fa-sign-in-alt"></i> <span id="loginBtnTxt">Войти</span></button>
+      <div class="auth-hint" id="authDemo">Демо: demo@myway.kz / Demo@123!</div>
+      <div id="loginError" class="auth-error hidden"></div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerForm" class="auth-form hidden">
+      <div class="fld"><i class="fas fa-user fi"></i><input type="text" id="regName" placeholder="Ваше имя" autocomplete="name"/></div>
+      <div class="fld"><i class="fas fa-envelope fi"></i><input type="email" id="regEmail" placeholder="Email" autocomplete="email"/></div>
+      <div class="fld">
+        <i class="fas fa-lock fi"></i>
+        <input type="password" id="regPassword" placeholder="Пароль" autocomplete="new-password"/>
+        <button class="pass-eye" id="eyeBtn" type="button"><i class="fas fa-eye"></i></button>
+      </div>
+      <div class="pass-rules" id="passRules">
+        <span id="pr-len" class="pr">• Мин. 6 символов</span>
+        <span id="pr-upper" class="pr">• 1 заглавная буква</span>
+        <span id="pr-lower" class="pr">• 1 строчная буква</span>
+        <span id="pr-num" class="pr">• 1 цифра</span>
+        <span id="pr-spec" class="pr">• 1 спецсимвол (!@#$...)</span>
+      </div>
+      <button class="btn btn-primary wf" id="registerBtn"><i class="fas fa-user-plus"></i> <span id="registerBtnTxt">Создать аккаунт</span></button>
+      <div id="registerError" class="auth-error hidden"></div>
+    </div>
+  </div>
 </div>
 
-<!-- ═══════════════ ОСНОВНОЕ ПРИЛОЖЕНИЕ ═══════════════ -->
+<!-- ══ APP ══ -->
 <div id="app" class="hidden app-layout">
 
-    <!-- SIDEBAR -->
-    <aside id="sidebar" class="sidebar">
-        <div class="sidebar-logo">
-            <svg width="34" height="34" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="slg" x1="0" y1="0" x2="52" y2="52" gradientUnits="userSpaceOnUse">
-                        <stop offset="0%" stop-color="#7c3aed"/>
-                        <stop offset="100%" stop-color="#06b6d4"/>
-                    </linearGradient>
-                </defs>
-                <rect width="52" height="52" rx="14" fill="url(#slg)"/>
-                <path d="M10 36 L10 18 L18 28 L26 18 L26 36" stroke="white" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                <path d="M28 18 L32 32 L36 24 L40 32 L44 18" stroke="white" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                <circle cx="40" cy="36" r="3" fill="#06b6d4"/>
-            </svg>
-            <div class="sidebar-logo-text">
-                <span class="sidebar-logo-name">My Way</span>
-            </div>
-        </div>
-
-        <nav id="nav" class="sidebar-nav"></nav>
-
-        <div class="sidebar-bottom">
-            <div id="sidebarUser" class="sidebar-user"></div>
-        </div>
-    </aside>
-
-    <!-- MAIN -->
-    <div class="main-area">
-        <header id="header" class="topbar"></header>
-        <main id="content" class="content-area"></main>
-        <footer id="footer" class="bottombar"></footer>
+  <aside id="sidebar" class="sidebar">
+    <div class="sb-logo">
+      <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
+        <defs><linearGradient id="slg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs>
+        <rect width="48" height="48" rx="14" fill="url(#slg)"/>
+        <path d="M9 34 L9 17 L17 27 L24 17 L24 34" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M26 17 L30 30 L34 22 L38 30 L42 17" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="38" cy="35" r="3" fill="#06b6d4"/>
+      </svg>
+      <span class="sb-logo-name">My Way</span>
     </div>
+    <nav id="nav" class="sb-nav"></nav>
+    <div class="sb-bottom">
+      <div id="sbUser" class="sb-user"></div>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <header id="header" class="topbar"></header>
+    <main id="content" class="content-area"></main>
+    <footer id="footer" class="bottombar"></footer>
+  </div>
 </div>
 
-<!-- AI CHAT BUBBLE -->
-<div id="aiChatBubble" class="ai-chat-bubble hidden">
-    <div class="ai-chat-window">
-        <div class="ai-chat-header">
-            <div class="ai-chat-title">
-                <div class="ai-chat-avatar">
-                    <i class="fas fa-robot"></i>
-                </div>
-                <div>
-                    <div style="font-weight:700;font-size:14px;">ИИ-советник</div>
-                    <div style="font-size:11px;opacity:0.7;">My Way Assistant</div>
-                </div>
-            </div>
-            <button id="aiChatClose" class="ai-chat-close">✕</button>
-        </div>
-        <div id="aiChatMessages" class="ai-chat-messages">
-            <div class="ai-msg ai-msg-bot">
-                <div class="ai-msg-bubble">Привет! 👋 Я ваш финансовый ИИ-советник. Спросите меня про расходы, сбережения или финансовые советы!</div>
-            </div>
-        </div>
-        <div class="ai-chat-input-row">
-            <input type="text" id="aiChatInput" placeholder="Задайте вопрос..." />
-            <button id="aiChatSend" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i></button>
-        </div>
+<!-- ══ AI CHAT BUBBLE ══ -->
+<div id="aiChat" class="ai-bubble hidden">
+  <div class="ai-window" id="aiWindow">
+    <div class="ai-win-hdr">
+      <div class="ai-win-title">
+        <div class="ai-av"><i class="fas fa-robot"></i></div>
+        <div><div id="aiWinName" style="font-weight:700;font-size:13px;">ИИ-советник</div><div style="font-size:10px;opacity:.6;">My Way AI</div></div>
+      </div>
+      <button id="aiClose" class="ai-close-btn">✕</button>
     </div>
-    <button id="aiChatToggle" class="ai-chat-toggle">
-        <i class="fas fa-robot"></i>
-        <span class="ai-chat-badge">ИИ</span>
-    </button>
+    <div id="aiMessages" class="ai-messages"></div>
+    <div class="ai-inp-row">
+      <input type="text" id="aiInput" placeholder="Задайте вопрос..."/>
+      <button id="aiSend" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+  <button id="aiToggle" class="ai-toggle-btn">
+    <i class="fas fa-robot"></i>
+    <span class="ai-badge">AI</span>
+  </button>
 </div>
 
 <script src="app.js"></script>
