@@ -10,7 +10,7 @@ const L = {
     loginBtn:'Войти', registerBtn:'Создать аккаунт',
     emailPh:'Email', passPh:'Пароль', namePh:'Ваше имя', passPh2:'Пароль',
     demo:'Демо: demo@myway.kz / Demo@123!',
-    nav:{dashboard:'Дашборд',transactions:'Транзакции',cards:'Карты',deposits:'Депозиты',stats:'Статистика',goals:'Цели',gamification:'Игра',ai:'ИИ-советник',tips:'Советы мудрецов',import:'Импорт'},
+    nav:{dashboard:'Дашборд',transactions:'Транзакции',cards:'Карты',deposits:'Депозиты',stats:'Статистика',goals:'Цели',gamification:'Игра',ai:'ИИ-советник',tips:'Советы мудрецов',import:'Импорт',credits:'Кредиты'},
     balance:'Баланс', income:'Доходы', expense:'Расходы',
     txTitle:'Добавить операцию', txPh:'"Кофе 350" или "Зарплата 200000"',
     addBtn:'Добавить', clearBtn:'Очистить',
@@ -65,7 +65,7 @@ const L = {
     loginBtn:'Кіру', registerBtn:'Аккаунт жасау',
     emailPh:'Email', passPh:'Құпия сөз', namePh:'Атыңыз', passPh2:'Құпия сөз',
     demo:'Демо: demo@myway.kz / Demo@123!',
-    nav:{dashboard:'Басты',transactions:'Операциялар',cards:'Карталар',deposits:'Депозиттер',stats:'Статистика',goals:'Мақсаттар',gamification:'Ойын',ai:'ЖИ-кеңесші',tips:'Данышпандар кеңесі',import:'Импорт'},
+    nav:{dashboard:'Басты',transactions:'Операциялар',cards:'Карталар',deposits:'Депозиттер',stats:'Статистика',goals:'Мақсаттар',gamification:'Ойын',ai:'ЖИ-кеңесші',tips:'Данышпандар кеңесі',import:'Импорт',credits:'Кредиттер'},
     balance:'Баланс', income:'Кірістер', expense:'Шығыстар',
     txTitle:'Операция қосу', txPh:'"Кофе 350" немесе "Жалақы 200000"',
     addBtn:'Қосу', clearBtn:'Тазалау',
@@ -120,7 +120,7 @@ const L = {
     loginBtn:'Login', registerBtn:'Create account',
     emailPh:'Email', passPh:'Password', namePh:'Your name', passPh2:'Password',
     demo:'Demo: demo@myway.kz / Demo@123!',
-    nav:{dashboard:'Dashboard',transactions:'Transactions',cards:'Cards',deposits:'Deposits',stats:'Statistics',goals:'Goals',gamification:'Game',ai:'AI Advisor',tips:'Wisdom Tips',import:'Import'},
+    nav:{dashboard:'Dashboard',transactions:'Transactions',cards:'Cards',deposits:'Deposits',stats:'Statistics',goals:'Goals',gamification:'Game',ai:'AI Advisor',tips:'Wisdom Tips',import:'Import',credits:'Credits'},
     balance:'Balance', income:'Income', expense:'Expenses',
     txTitle:'Add transaction', txPh:'"Coffee 350" or "Salary 200000"',
     addBtn:'Add', clearBtn:'Clear',
@@ -250,12 +250,9 @@ function defaultData() {
     nextId:1, currency:'KZT', lang:'ru', joinedAt:Date.now(),
     premium:false, premiumSince:null, premiumPlan:null,
     trialStart:Date.now(), savedCard:null,
-    quests:[
-      {id:1,title:'Без кофе',desc:'Не трать на кофе сегодня',done:false,reward:50},
-      {id:2,title:'Проверь подписки',desc:'Найди ненужную подписку',done:false,reward:100},
-      {id:3,title:'Сэкономь 10%',desc:'Потрать на 10% меньше вчера',done:false,reward:75},
-      {id:4,title:'Запиши все траты',desc:'Добавь 5 транзакций за день',done:false,reward:50},
-    ],
+    quests:[], dailyQuestDate:null,
+    credits:[],
+    quickPrices:{coffee:350,lunch:1500,taxi:800,groceries:5000,salary:300000,invest:20000},
     achievements:{first_tx:false,five_tx:false,ten_tx:false,first_goal:false,goal_50:false,quest_master:false,saver:false,level_5:false,first_card:false}
   };
 }
@@ -307,6 +304,44 @@ function trialDaysLeft() {
   const days = Math.max(0, Math.ceil(30 - (Date.now()-start)/864e5));
   return days;
 }
+
+// ── DAILY QUESTS POOL ──────────────────
+const QUEST_POOL = [
+  {id:'q1', title:'Без кофе ☕',       desc:'Не трать на кофе сегодня',           reward:50},
+  {id:'q2', title:'Проверь подписки 📱',desc:'Найди и запиши ненужную подписку',   reward:100},
+  {id:'q3', title:'Сэкономь на обеде 🍱',desc:'Потрать на еду меньше обычного',   reward:75},
+  {id:'q4', title:'Запиши 3 траты 📝',  desc:'Добавь 3 транзакции за день',        reward:60},
+  {id:'q5', title:'Без такси 🚶',       desc:'Не вызывай такси сегодня',           reward:80},
+  {id:'q6', title:'Дневной бюджет 💰',  desc:'Потрать менее 5000 ₸ за день',       reward:90},
+  {id:'q7', title:'Пополни цель 🎯',    desc:'Внеси любую сумму в финансовую цель',reward:120},
+  {id:'q8', title:'Без доставки 🏪',    desc:'Не заказывай доставку сегодня',      reward:70},
+  {id:'q9', title:'Чек дня 🧾',         desc:'Запиши все траты до конца дня',      reward:50},
+  {id:'q10',title:'Инвест-день 📈',     desc:'Отложи хоть 1000 ₸ на инвестиции',  reward:150},
+  {id:'q11',title:'Без развлечений 🎮', desc:'Не трать на развлечения сегодня',    reward:80},
+  {id:'q12',title:'Экономный день 💎',  desc:'Потрать менее 3000 ₸ за день',       reward:130},
+];
+
+function getTodayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+function refreshDailyQuests() {
+  const today = getTodayKey();
+  if(DATA.dailyQuestDate === today && DATA.quests && DATA.quests.length > 0) return;
+  // Pick 3 random quests for today using date as seed
+  const d = new Date(); const seed = d.getDate() + d.getMonth()*31 + d.getFullYear()*366;
+  const shuffled = [...QUEST_POOL].sort((a,b)=>{
+    const ha = Math.abs(seed * a.id.charCodeAt(1)) % 1000;
+    const hb = Math.abs(seed * b.id.charCodeAt(1)) % 1000;
+    return ha - hb;
+  });
+  DATA.quests = shuffled.slice(0,3).map(q=>({...q, done:false}));
+  DATA.dailyQuestDate = today;
+  saveData();
+}
+
+function checkAchievements_alias() { checkAch(); }
 
 function getSubscriptionStatus() {
   if(isPremium()) {
@@ -486,6 +521,7 @@ function showApp() {
   document.getElementById('authScreen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   document.getElementById('aiChat').classList.remove('hidden');
+  refreshDailyQuests();
   // sync lang pills
   document.querySelectorAll('.lang-pill').forEach(p=>{
     p.classList.toggle('active',p.dataset.l===LANG);
@@ -658,6 +694,7 @@ const TABS=[
   {id:'ai',           icon:'fa-robot'},
   {id:'tips',         icon:'fa-lightbulb'},
   {id:'import',       icon:'fa-file-import'},
+  {id:'credits',      icon:'fa-hand-holding-usd'},
 ];
 let TAB='dashboard';
 
@@ -749,14 +786,15 @@ function initMobileToggle() {
 
 function renderActiveTab(tab) {
   // Show paywall for premium features when trial expired
-  const premiumTabs=['ai','import','stats'];
+  const premiumTabs=['ai','stats','credits'];
   if(premiumTabs.includes(tab)&&!isTrialActive()){
     showPaywall();
     // Still show locked version
   }
   const fns={dashboard:renderDashboard,transactions:renderTxTab,cards:renderCardsTab,
     deposits:renderDepositsTab,stats:renderStatsTab,goals:renderGoalsTab,
-    gamification:renderGamTab,ai:renderAITab,tips:renderTipsTab,import:renderImportTab};
+    gamification:renderGamTab,ai:renderAITab,tips:renderTipsTab,import:renderImportTab,
+    credits:renderCreditsTab};
   (fns[tab]||renderDashboard)();
 }
 
@@ -1056,6 +1094,12 @@ function renderDashboard() {
             <span style="color:var(--red);"><i class="fas fa-arrow-down"></i> ${fmtAmt(exp)}</span>
           </div>
           <div style="margin-top:6px;font-size:11px;color:${savePct>=20?'var(--green)':savePct>=0?'var(--tx2)':'var(--red)'};">${t('savingsRate')}: ${savePct}%</div>
+          ${!isPremium()&&isTrialActive()?`<div style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--green);cursor:pointer;" onclick="showPaywall()">
+            <i class="fas fa-hourglass-half"></i> ${trialDaysLeft()} дней бесплатно осталось
+          </div>`:''}
+          ${!isPremium()&&!isTrialActive()?`<div style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;background:var(--rd);border:1px solid rgba(244,63,94,.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--red);cursor:pointer;" onclick="showPaywall()">
+            <i class="fas fa-lock"></i> Пробный период истёк — оформить Premium
+          </div>`:''}
         </div>
       </div>
       <div class="card">
@@ -1129,8 +1173,8 @@ function renderTxTab() {
         <button class="btn btn-success" id="txAddBtn"><i class="fas fa-plus"></i> ${t('addBtn')}</button>
         <button class="btn btn-danger btn-sm" id="txClrBtn"><i class="fas fa-trash"></i></button>
       </div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:9px;">
-        ${t('quickT').map(([l,v])=>`<button class="btn btn-outline btn-sm template" data-text="${v}">${l}</button>`).join('')}
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:9px;" id="quickBtns">
+        ${renderQuickButtons()}
       </div>
     </div>
     <div class="card">
@@ -1144,6 +1188,10 @@ function renderTxTab() {
       </div>
       <div class="tx-list" id="fullTxList"></div>
     </div>`;
+
+  // Init quick price buttons
+  const qb = document.getElementById('quickBtns');
+  if(qb){ qb.innerHTML = renderQuickButtons(); initQuickButtons(qb); }
 
   document.getElementById('txAddBtn').addEventListener('click',()=>{
     const v=document.getElementById('txInp').value.trim();
@@ -1188,6 +1236,13 @@ function renderFullTxList(f) {
       </div>
     </div>`;
   }).join('')||`<div style="text-align:center;padding:20px;color:var(--tx3);">${t('noTx')}</div>`;
+  list.querySelectorAll('.tx-edit').forEach(b=>{
+    b.addEventListener('click',e=>{
+      e.stopPropagation();
+      const tx=DATA.transactions.find(x=>x.id===parseInt(b.dataset.id)); if(!tx) return;
+      showEditTxModal(tx, ()=>{ renderFullTxList(f); renderHeader(); });
+    });
+  });
   list.querySelectorAll('.tx-del').forEach(b=>{
     b.addEventListener('click',e=>{
       e.stopPropagation();
@@ -1596,6 +1651,7 @@ function renderDepositsTab() {
 
 // ── GAMIFICATION TAB ───────────────────
 function renderGamTab() {
+  refreshDailyQuests();
   const ri=getRankInfo();
   const xpPct=ri.next?Math.min(100,Math.round(DATA.xp/ri.next.xp*100)):100;
   document.getElementById('content').innerHTML=`
@@ -1624,7 +1680,18 @@ function renderGamTab() {
 
 function renderQuests() {
   const list=document.getElementById('questList'); if(!list) return;
-  list.innerHTML=DATA.quests.map(q=>`<div class="quest-item ${q.done?'done':''}">
+  const now = new Date();
+  const midnight = new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
+  const msLeft = midnight-now;
+  const hLeft = Math.floor(msLeft/36e5);
+  const mLeft = Math.floor((msLeft%36e5)/6e4);
+  list.innerHTML=`
+    <div style="display:flex;align-items:center;gap:6px;padding:7px 10px;background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2);border-radius:var(--rsm);margin-bottom:9px;font-size:11px;color:var(--cyan);">
+      <i class="fas fa-clock"></i>
+      <span>Обновятся через: <strong>${hLeft}ч ${mLeft}мин</strong></span>
+      <span style="margin-left:auto;color:var(--tx3);">${DATA.quests.filter(q=>q.done).length}/${DATA.quests.length} выполнено</span>
+    </div>`+
+  DATA.quests.map(q=>`<div class="quest-item ${q.done?'done':''}">
     <span style="font-size:16px;">${q.done?'✅':'📌'}</span>
     <div style="flex:1;"><div class="q-title">${q.title}</div><div class="q-desc">${q.desc}</div></div>
     ${!q.done?`<button class="btn btn-primary btn-xs quest-btn" data-id="${q.id}">✓</button>`:''}
@@ -1643,6 +1710,11 @@ function renderAch() {
 
 // ── AI TAB ─────────────────────────────
 function renderAITab() {
+  if(!isTrialActive()){
+    const feats=['🎯 Анализ финансов и советы','📊 Прогноз расходов','💡 Персональные рекомендации','🗣️ Чат с финансовым ИИ','📈 Сравнение периодов'];
+    document.getElementById('content').innerHTML='<div class="card" style="text-align:center;padding:36px 20px;"><div style="font-size:48px;margin-bottom:10px;">🤖</div><div style="font-family:Space Grotesk,sans-serif;font-size:18px;font-weight:700;margin-bottom:6px;">ИИ-советник</div><div style="font-size:13px;color:var(--tx2);margin-bottom:18px;">Персональный финансовый советник с анализом расходов и прогнозами</div><div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:18px;text-align:left;">'+feats.map(f=>'<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--brd);"><span>'+f+'</span><span style="margin-left:auto;color:var(--gold);">⭐</span></div>').join('')+'</div><button class="btn btn-primary wf" style="justify-content:center;font-size:14px;padding:13px;" onclick="showPaywall()"><i class="fas fa-star"></i> Оформить Premium от 3 500 ₸/мес</button></div>';
+    return;
+  }
   document.getElementById('content').innerHTML=`
     <div class="grid2" style="margin-bottom:14px;">
       <div class="card">
@@ -1967,6 +2039,352 @@ function renderImportTab() {
     alert(`✅ Импортировано: ${importedTxs.length} операций`);
   });
 }
+
+
+// ══════════════════════════════════════════════════════
+// QUICK PRICE BUTTONS — editable prices
+// ══════════════════════════════════════════════════════
+const DEFAULT_PRICES = {
+  coffee:350, lunch:1500, taxi:800, groceries:5000, salary:300000, invest:20000
+};
+
+function getQuickPrices() {
+  if(!DATA.quickPrices) DATA.quickPrices = {...DEFAULT_PRICES};
+  return DATA.quickPrices;
+}
+
+function renderQuickButtons() {
+  const p = getQuickPrices();
+  const items = [
+    {key:'coffee',   emoji:'☕', label:'Кофе',    type:'expense'},
+    {key:'lunch',    emoji:'🍽', label:'Обед',    type:'expense'},
+    {key:'taxi',     emoji:'🚗', label:'Такси',   type:'expense'},
+    {key:'groceries',emoji:'🛒', label:'Продукты',type:'expense'},
+    {key:'salary',   emoji:'💰', label:'ЗП',      type:'income'},
+    {key:'invest',   emoji:'📈', label:'Инвест',  type:'expense'},
+  ];
+  return items.map(it=>`
+    <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+      <button class="btn btn-outline btn-sm template" data-key="${it.key}" data-type="${it.type}"
+        style="padding:6px 10px;white-space:nowrap;">
+        ${it.emoji} ${it.label}
+        <span class="qprice" data-key="${it.key}" style="font-size:10px;color:var(--acc2);margin-left:3px;">${p[it.key].toLocaleString()}₸</span>
+      </button>
+      <button class="qedit-btn" data-key="${it.key}" data-label="${it.label}" title="Изменить цену"
+        style="background:transparent;border:none;font-size:9px;color:var(--tx3);cursor:pointer;padding:0;">
+        <i class="fas fa-pen" style="font-size:8px;"></i> изменить
+      </button>
+    </div>`).join('');
+}
+
+function initQuickButtons(container) {
+  if(!container) return;
+  // Template click — add transaction with saved price
+  container.querySelectorAll('.template').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const key = b.dataset.key;
+      const type = b.dataset.type;
+      const p = getQuickPrices();
+      const label = b.querySelector('span') ? b.textContent.replace(b.querySelector('.qprice').textContent,'').trim() : key;
+      const inp = document.getElementById('txInp');
+      if(inp){ inp.value = `${label} ${p[key]}`; document.getElementById('txAddBtn').click(); }
+      else addTx(`${label} ${p[key]}`);
+    });
+  });
+  // Edit price click
+  container.querySelectorAll('.qedit-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const key = b.dataset.key;
+      const p = getQuickPrices();
+      const newVal = prompt(`Новая цена для "${b.dataset.label}" (₸):`, p[key]);
+      if(newVal && parseInt(newVal) > 0){
+        DATA.quickPrices[key] = parseInt(newVal);
+        saveData();
+        // Re-render quick buttons
+        const qb = document.getElementById('quickBtns');
+        if(qb) qb.innerHTML = renderQuickButtons();
+        initQuickButtons(qb);
+      }
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// EDIT TRANSACTION MODAL
+// ══════════════════════════════════════════════════════
+function showEditTxModal(tx, onSave) {
+  document.querySelector('.edit-tx-modal')?.remove();
+  const m = document.createElement('div');
+  m.className = 'modal-ov edit-tx-modal';
+  const cats = ['Еда','Кафе/Доставка','Транспорт','Учёба','Здоровье','Связь','Одежда',
+    'Красота','Развлечения','Жильё','Инвестиции','Подарки','Большая покупка','Путешествие',
+    'Стипендия','Зарплата','Перевод','Прочее'];
+  m.innerHTML = `<div class="modal-box" style="max-width:380px;">
+    <div class="modal-hdr">
+      <h3><i class="fas fa-pen"></i> Изменить операцию</h3>
+      <button class="modal-close" onclick="this.closest('.edit-tx-modal').remove()">✕</button>
+    </div>
+    <div class="fgrp"><label>Описание</label>
+      <input class="finput wf" type="text" id="etDesc" value="${tx.text}"/>
+    </div>
+    <div class="fgrp"><label>Сумма (₸)</label>
+      <input class="finput wf" type="number" id="etAmt" value="${tx.amount}" min="1"/>
+    </div>
+    <div class="fgrp"><label>Тип</label>
+      <div style="display:flex;gap:7px;">
+        <button class="btn ${tx.type==='expense'?'btn-danger':'btn-outline'} btn-sm et-type" data-t="expense">📤 Расход</button>
+        <button class="btn ${tx.type==='income'?'btn-success':'btn-outline'} btn-sm et-type" data-t="income">📥 Доход</button>
+      </div>
+    </div>
+    <div class="fgrp"><label>Категория</label>
+      <select class="finput wf" id="etCat">
+        ${cats.map(c=>`<option value="${c}" ${c===tx.category?'selected':''}>${catEmoji(c)} ${c}</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="btn btn-primary" style="flex:1;justify-content:center;" id="etSave"><i class="fas fa-check"></i> Сохранить</button>
+      <button class="btn btn-ghost" style="flex:1;justify-content:center;" onclick="this.closest('.edit-tx-modal').remove()">Отмена</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click',e=>{ if(e.target===m) m.remove(); });
+
+  let selType = tx.type;
+  m.querySelectorAll('.et-type').forEach(b=>{
+    b.addEventListener('click',()=>{
+      selType = b.dataset.t;
+      m.querySelectorAll('.et-type').forEach(x=>{
+        x.className = x.dataset.t==='expense'
+          ? `btn ${selType==='expense'?'btn-danger':'btn-outline'} btn-sm et-type`
+          : `btn ${selType==='income'?'btn-success':'btn-outline'} btn-sm et-type`;
+      });
+    });
+  });
+
+  document.getElementById('etSave').addEventListener('click',()=>{
+    const desc = document.getElementById('etDesc').value.trim();
+    const amt  = parseInt(document.getElementById('etAmt').value);
+    const cat  = document.getElementById('etCat').value;
+    if(!desc || amt<=0){ alert('Заполните все поля'); return; }
+    tx.text = desc; tx.amount = amt; tx.type = selType; tx.category = cat;
+    saveData(); m.remove(); if(onSave) onSave();
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// CREDITS / LOANS / MORTGAGE TAB
+// ══════════════════════════════════════════════════════
+function addCredit(name, totalAmount, monthlyPayment, rate, termMonths, type) {
+  if(!name||totalAmount<=0||monthlyPayment<=0){alert('Заполните все поля');return false;}
+  if(!DATA.credits) DATA.credits=[];
+  DATA.credits.push({
+    id:Date.now(), name, totalAmount, monthlyPayment,
+    rate, termMonths, type, startDate:Date.now(),
+    paid:0, active:true
+  });
+  saveData(); return true;
+}
+
+function deleteCredit(id) {
+  if(!confirm('Удалить кредит?')) return;
+  DATA.credits = (DATA.credits||[]).filter(c=>c.id!==id);
+  saveData(); renderCreditsTab();
+}
+
+function makePayment(id) {
+  const c = (DATA.credits||[]).find(x=>x.id===id); if(!c) return;
+  c.paid += c.monthlyPayment;
+  if(c.paid >= c.totalAmount){ c.paid = c.totalAmount; c.active = false; }
+  DATA.transactions.push({
+    id:DATA.nextId++, text:`Платёж: ${c.name}`,
+    amount:c.monthlyPayment, type:'expense',
+    category:'Кредит', cardId:null, date:Date.now()
+  });
+  saveData(); renderCreditsTab(); renderHeader();
+}
+
+function renderCreditsTab() {
+  if(!DATA.credits) DATA.credits=[];
+  const totalDebt = DATA.credits.filter(c=>c.active).reduce((s,c)=>s+(c.totalAmount-c.paid),0);
+  const totalMonthly = DATA.credits.filter(c=>c.active).reduce((s,c)=>s+c.monthlyPayment,0);
+
+  document.getElementById('content').innerHTML=`
+    <div class="grid2" style="margin-bottom:14px;">
+      <div class="card">
+        <div class="clbl"><i class="fas fa-plus-circle"></i> Добавить кредит / ипотеку</div>
+        <div style="margin-top:10px;">
+          <div class="fgrp"><label>Название</label>
+            <input class="finput wf" type="text" id="crName" placeholder="Ипотека Kaspi / Авто-кредит..."/>
+          </div>
+          <div class="fgrp"><label>Тип</label>
+            <select class="finput wf" id="crType">
+              <option value="mortgage">🏠 Ипотека</option>
+              <option value="auto">🚗 Авто-кредит</option>
+              <option value="consumer">💳 Потребительский</option>
+              <option value="other">📋 Другой</option>
+            </select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="fgrp"><label>Общая сумма (₸)</label>
+              <input class="finput" type="number" id="crTotal" placeholder="5000000"/>
+            </div>
+            <div class="fgrp"><label>Уже оплачено (₸)</label>
+              <input class="finput" type="number" id="crPaid" placeholder="0"/>
+            </div>
+            <div class="fgrp"><label>Платёж в месяц (₸)</label>
+              <input class="finput" type="number" id="crMonthly" placeholder="85000"/>
+            </div>
+            <div class="fgrp"><label>Ставка % год.</label>
+              <input class="finput" type="number" id="crRate" placeholder="18" step="0.1"/>
+            </div>
+          </div>
+          <button class="btn btn-primary wf" id="crAddBtn" style="margin-top:4px;">
+            <i class="fas fa-plus"></i> Добавить
+          </button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="clbl"><i class="fas fa-chart-pie"></i> Сводка долгов</div>
+        <div style="margin-top:12px;">
+          <div style="text-align:center;margin-bottom:14px;">
+            <div style="font-size:11px;color:var(--tx3);margin-bottom:4px;">Общий долг</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:800;color:var(--red);">${fmtAmt(totalDebt)}</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:9px 12px;background:var(--bg3);border-radius:var(--r);margin-bottom:7px;">
+            <span style="font-size:12px;color:var(--tx3);">Активных кредитов</span>
+            <strong>${DATA.credits.filter(c=>c.active).length}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:9px 12px;background:var(--bg3);border-radius:var(--r);margin-bottom:7px;">
+            <span style="font-size:12px;color:var(--tx3);">Платёж в месяц</span>
+            <strong style="color:var(--red);">${fmtAmt(totalMonthly)}</strong>
+          </div>
+          ${DATA.credits.filter(c=>c.active).length>0?`<div style="margin-top:10px;">
+            ${DATA.credits.filter(c=>c.active).map(c=>{
+              const pct = Math.min(100,Math.round(c.paid/c.totalAmount*100));
+              return `<div style="margin-bottom:8px;">
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+                  <span>${c.name}</span><span style="color:var(--tx3);">${pct}%</span>
+                </div>
+                <div style="height:4px;background:var(--bg4);border-radius:4px;overflow:hidden;">
+                  <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--acc),var(--cyan));border-radius:4px;"></div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>`:''}
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <div class="clbl"><i class="fas fa-list"></i> Мои кредиты (${DATA.credits.length})</div>
+      </div>
+      <div id="creditsList"></div>
+    </div>`;
+
+  document.getElementById('crAddBtn').addEventListener('click',()=>{
+    const name = document.getElementById('crName').value.trim();
+    const type = document.getElementById('crType').value;
+    const total = parseInt(document.getElementById('crTotal').value)||0;
+    const paid  = parseInt(document.getElementById('crPaid').value)||0;
+    const monthly = parseInt(document.getElementById('crMonthly').value)||0;
+    const rate  = parseFloat(document.getElementById('crRate').value)||0;
+    if(addCredit(name,total,monthly,rate,0,type)){
+      // Set already paid amount
+      const c = DATA.credits[DATA.credits.length-1]; if(c) c.paid=paid;
+      saveData(); renderCreditsTab();
+    }
+  });
+
+  renderCreditsList();
+}
+
+function renderCreditsList() {
+  const list = document.getElementById('creditsList'); if(!list) return;
+  if(!DATA.credits||!DATA.credits.length){
+    list.innerHTML=`<div style="text-align:center;padding:28px;color:var(--tx3);">
+      <i class="fas fa-hand-holding-usd" style="font-size:36px;opacity:.2;display:block;margin-bottom:10px;"></i>
+      Нет кредитов — вы свободны от долгов! 🎉
+    </div>`;
+    return;
+  }
+  const typeIcons = {mortgage:'🏠',auto:'🚗',consumer:'💳',other:'📋'};
+  list.innerHTML = DATA.credits.map(c=>{
+    const pct = Math.min(100,Math.round(c.paid/c.totalAmount*100));
+    const remaining = Math.max(0,c.totalAmount-c.paid);
+    const monthsLeft = c.monthlyPayment>0?Math.ceil(remaining/c.monthlyPayment):0;
+    return `<div style="padding:14px;background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);margin-bottom:9px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
+        <div>
+          <div style="font-size:14px;font-weight:700;">${typeIcons[c.type]||'📋'} ${c.name}</div>
+          <div style="font-size:11px;color:var(--tx3);margin-top:2px;">${c.rate>0?c.rate+'% год. · ':''}${c.active?'Активный':'✅ Закрыт'}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:15px;font-weight:800;color:var(--red);">${fmtAmt(remaining)}</div>
+          <div style="font-size:10px;color:var(--tx3);">осталось долга</div>
+        </div>
+      </div>
+      <div style="height:5px;background:var(--bg4);border-radius:4px;margin-bottom:10px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--green),var(--cyan));border-radius:4px;transition:width .5s;"></div>
+      </div>
+      <div style="display:flex;gap:10px;font-size:11px;margin-bottom:10px;flex-wrap:wrap;">
+        <span style="color:var(--tx3);">Оплачено: <strong style="color:var(--green);">${fmtAmt(c.paid)}</strong></span>
+        <span style="color:var(--tx3);">Всего: <strong>${fmtAmt(c.totalAmount)}</strong></span>
+        <span style="color:var(--tx3);">Платёж: <strong style="color:var(--red);">${fmtAmt(c.monthlyPayment)}/мес</strong></span>
+        ${monthsLeft>0?`<span style="color:var(--tx3);">~${monthsLeft} мес. до закрытия</span>`:''}
+      </div>
+      <div style="display:flex;gap:7px;">
+        ${c.active?`<button class="btn btn-success btn-sm" onclick="makePayment(${c.id})">
+          <i class="fas fa-coins"></i> Внести платёж ${fmtAmt(c.monthlyPayment)}
+        </button>`:'<span style="color:var(--green);font-size:12px;font-weight:700;">✅ Полностью выплачен!</span>'}
+        <button class="btn btn-outline btn-sm" onclick="showEditCreditModal(${c.id})">
+          <i class="fas fa-pen"></i>
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCredit(${c.id})">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showEditCreditModal(id) {
+  const c = (DATA.credits||[]).find(x=>x.id===id); if(!c) return;
+  document.querySelector('.edit-cr-modal')?.remove();
+  const m = document.createElement('div'); m.className='modal-ov edit-cr-modal';
+  m.innerHTML=`<div class="modal-box" style="max-width:360px;">
+    <div class="modal-hdr">
+      <h3><i class="fas fa-pen"></i> Изменить кредит</h3>
+      <button class="modal-close" onclick="this.closest('.edit-cr-modal').remove()">✕</button>
+    </div>
+    <div class="fgrp"><label>Название</label><input class="finput wf" id="ecName" value="${c.name}"/></div>
+    <div class="fgrp"><label>Общая сумма (₸)</label><input class="finput wf" type="number" id="ecTotal" value="${c.totalAmount}"/></div>
+    <div class="fgrp"><label>Уже оплачено (₸)</label><input class="finput wf" type="number" id="ecPaid" value="${c.paid}"/></div>
+    <div class="fgrp"><label>Платёж в месяц (₸)</label><input class="finput wf" type="number" id="ecMonthly" value="${c.monthlyPayment}"/></div>
+    <div class="fgrp"><label>Ставка % год.</label><input class="finput wf" type="number" id="ecRate" value="${c.rate}" step="0.1"/></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" style="flex:1;justify-content:center;" id="ecSave"><i class="fas fa-check"></i> Сохранить</button>
+      <button class="btn btn-ghost" style="flex:1;justify-content:center;" onclick="this.closest('.edit-cr-modal').remove()">Отмена</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click',e=>{if(e.target===m)m.remove();});
+  document.getElementById('ecSave').addEventListener('click',()=>{
+    c.name = document.getElementById('ecName').value.trim()||c.name;
+    c.totalAmount = parseInt(document.getElementById('ecTotal').value)||c.totalAmount;
+    c.paid = parseInt(document.getElementById('ecPaid').value)||0;
+    c.monthlyPayment = parseInt(document.getElementById('ecMonthly').value)||c.monthlyPayment;
+    c.rate = parseFloat(document.getElementById('ecRate').value)||c.rate;
+    c.active = c.paid < c.totalAmount;
+    saveData(); m.remove(); renderCreditsTab();
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// PATCH renderTxTab to init quick buttons
+// ══════════════════════════════════════════════════════
+const _origRenderTxTab = renderTxTab;
+
 
 // ── BOOT ───────────────────────────────
 initAuth();

@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -16,7 +18,8 @@
   <div class="auth-glow g1"></div>
   <div class="auth-glow g2"></div>
   <div class="auth-box">
-    <!-- LOGO SVG -->
+
+    <!-- LOGO -->
     <div class="auth-logo">
       <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
         <defs>
@@ -36,7 +39,7 @@
       </div>
     </div>
 
-    <!-- LANG PICKER on auth -->
+    <!-- LANG -->
     <div class="auth-lang-row">
       <button class="lang-pill active" data-l="ru">🇷🇺 RU</button>
       <button class="lang-pill" data-l="kz">🇰🇿 KZ</button>
@@ -49,19 +52,41 @@
       <button class="auth-tab" data-auth="register" id="tabRegister">Регистрация</button>
     </div>
 
-    <!-- LOGIN -->
+    <!-- ── LOGIN ── -->
     <div id="loginForm" class="auth-form">
-      <div class="fld"><i class="fas fa-envelope fi"></i><input type="email" id="loginEmail" placeholder="Email" autocomplete="email"/></div>
-      <div class="fld"><i class="fas fa-lock fi"></i><input type="password" id="loginPassword" placeholder="Пароль" autocomplete="current-password"/></div>
-      <button class="btn btn-primary wf" id="loginBtn"><i class="fas fa-sign-in-alt"></i> <span id="loginBtnTxt">Войти</span></button>
+      <div class="fld">
+        <i class="fas fa-envelope fi"></i>
+        <input type="email" id="loginEmail" placeholder="Email" autocomplete="email"/>
+      </div>
+      <div class="fld">
+        <i class="fas fa-lock fi"></i>
+        <input type="password" id="loginPassword" placeholder="Пароль" autocomplete="current-password"/>
+        <button class="pass-eye" id="loginEye" type="button"><i class="fas fa-eye"></i></button>
+      </div>
+      <button class="btn btn-primary wf" id="loginBtn">
+        <i class="fas fa-sign-in-alt"></i> <span id="loginBtnTxt">Войти</span>
+      </button>
+      <!-- Forgot password link -->
+      <div style="text-align:center;margin-top:4px;">
+        <button id="forgotBtn" class="forgot-link" type="button">
+          <i class="fas fa-key"></i> <span id="forgotTxt">Забыли пароль?</span>
+        </button>
+      </div>
       <div class="auth-hint" id="authDemo">Демо: demo@myway.kz / Demo@123!</div>
       <div id="loginError" class="auth-error hidden"></div>
+      <div id="loginSuccess" class="auth-success hidden"></div>
     </div>
 
-    <!-- REGISTER -->
+    <!-- ── REGISTER ── -->
     <div id="registerForm" class="auth-form hidden">
-      <div class="fld"><i class="fas fa-user fi"></i><input type="text" id="regName" placeholder="Ваше имя" autocomplete="name"/></div>
-      <div class="fld"><i class="fas fa-envelope fi"></i><input type="email" id="regEmail" placeholder="Email" autocomplete="email"/></div>
+      <div class="fld">
+        <i class="fas fa-user fi"></i>
+        <input type="text" id="regName" placeholder="Ваше имя" autocomplete="name"/>
+      </div>
+      <div class="fld">
+        <i class="fas fa-envelope fi"></i>
+        <input type="email" id="regEmail" placeholder="Email" autocomplete="email"/>
+      </div>
       <div class="fld">
         <i class="fas fa-lock fi"></i>
         <input type="password" id="regPassword" placeholder="Пароль" autocomplete="new-password"/>
@@ -74,19 +99,83 @@
         <span id="pr-num" class="pr">• 1 цифра</span>
         <span id="pr-spec" class="pr">• 1 спецсимвол (!@#$...)</span>
       </div>
-      <button class="btn btn-primary wf" id="registerBtn"><i class="fas fa-user-plus"></i> <span id="registerBtnTxt">Создать аккаунт</span></button>
+      <button class="btn btn-primary wf" id="registerBtn">
+        <i class="fas fa-user-plus"></i> <span id="registerBtnTxt">Создать аккаунт</span>
+      </button>
       <div id="registerError" class="auth-error hidden"></div>
+      <div id="registerSuccess" class="auth-success hidden"></div>
     </div>
+
+    <!-- ── FORGOT PASSWORD FORM (hidden by default) ── -->
+    <div id="forgotForm" class="auth-form hidden">
+      <div style="text-align:center;margin-bottom:14px;">
+        <div style="font-size:32px;margin-bottom:6px;">🔑</div>
+        <div style="font-size:14px;font-weight:700;color:var(--tx);" id="forgotTitle">Восстановление пароля</div>
+        <div style="font-size:12px;color:var(--tx3);margin-top:4px;" id="forgotDesc">Введите email — пришлём код подтверждения</div>
+      </div>
+      <!-- Step 1: Enter email -->
+      <div id="forgotStep1">
+        <div class="fld">
+          <i class="fas fa-envelope fi"></i>
+          <input type="email" id="forgotEmail" placeholder="Ваш email" autocomplete="email"/>
+        </div>
+        <button class="btn btn-primary wf" id="forgotSendBtn">
+          <i class="fas fa-paper-plane"></i> <span id="forgotSendTxt">Отправить код</span>
+        </button>
+      </div>
+      <!-- Step 2: Enter code + new password -->
+      <div id="forgotStep2" class="hidden">
+        <div class="code-sent-badge" id="codeSentBadge">
+          <i class="fas fa-envelope-open-text"></i>
+          <span id="codeSentMsg">Код отправлен на email</span>
+        </div>
+        <div class="fld">
+          <i class="fas fa-hashtag fi"></i>
+          <input type="text" id="forgotCode" placeholder="Код из письма (6 цифр)" maxlength="6" autocomplete="one-time-code"
+            style="letter-spacing:6px;font-size:18px;font-weight:700;text-align:center;"/>
+        </div>
+        <div class="fld">
+          <i class="fas fa-lock fi"></i>
+          <input type="password" id="forgotNewPass" placeholder="Новый пароль" autocomplete="new-password"/>
+          <button class="pass-eye" id="forgotEye" type="button"><i class="fas fa-eye"></i></button>
+        </div>
+        <div class="pass-rules" style="margin-bottom:8px;">
+          <span id="fpr-len" class="pr">• Мин. 6 символов</span>
+          <span id="fpr-upper" class="pr">• 1 заглавная</span>
+          <span id="fpr-lower" class="pr">• 1 строчная</span>
+          <span id="fpr-num" class="pr">• 1 цифра</span>
+          <span id="fpr-spec" class="pr">• 1 спецсимвол</span>
+        </div>
+        <div class="fld">
+          <i class="fas fa-lock fi"></i>
+          <input type="password" id="forgotConfirmPass" placeholder="Повторите пароль" autocomplete="new-password"/>
+        </div>
+        <button class="btn btn-success wf" id="forgotConfirmBtn">
+          <i class="fas fa-check"></i> <span id="forgotConfirmTxt">Сменить пароль</span>
+        </button>
+        <button class="btn btn-ghost wf" id="forgotResendBtn" style="margin-top:6px;font-size:12px;justify-content:center;">
+          <i class="fas fa-redo"></i> <span id="forgotResendTxt">Отправить код повторно</span>
+        </button>
+      </div>
+      <div id="forgotError" class="auth-error hidden" style="margin-top:10px;"></div>
+      <div id="forgotSuccess" class="auth-success hidden" style="margin-top:10px;"></div>
+      <!-- Back to login -->
+      <button class="forgot-link" id="backToLoginBtn" style="margin-top:10px;width:100%;justify-content:center;">
+        <i class="fas fa-arrow-left"></i> <span id="backLoginTxt">Вернуться ко входу</span>
+      </button>
+    </div>
+
   </div>
 </div>
 
 <!-- ══ APP ══ -->
 <div id="app" class="hidden app-layout">
-
   <aside id="sidebar" class="sidebar">
     <div class="sb-logo">
       <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
-        <defs><linearGradient id="slg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs>
+        <defs><linearGradient id="slg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#06b6d4"/>
+        </linearGradient></defs>
         <rect width="48" height="48" rx="14" fill="url(#slg)"/>
         <path d="M9 34 L9 17 L17 27 L24 17 L24 34" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         <path d="M26 17 L30 30 L34 22 L38 30 L42 17" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
@@ -99,7 +188,6 @@
       <div id="sbUser" class="sb-user"></div>
     </div>
   </aside>
-
   <div class="main-area">
     <header id="header" class="topbar"></header>
     <main id="content" class="content-area"></main>
@@ -107,13 +195,16 @@
   </div>
 </div>
 
-<!-- ══ AI CHAT BUBBLE ══ -->
+<!-- ══ AI CHAT ══ -->
 <div id="aiChat" class="ai-bubble hidden">
   <div class="ai-window" id="aiWindow">
     <div class="ai-win-hdr">
       <div class="ai-win-title">
         <div class="ai-av"><i class="fas fa-robot"></i></div>
-        <div><div id="aiWinName" style="font-weight:700;font-size:13px;">ИИ-советник</div><div style="font-size:10px;opacity:.6;">My Way AI</div></div>
+        <div>
+          <div id="aiWinName" style="font-weight:700;font-size:13px;">ИИ-советник</div>
+          <div style="font-size:10px;opacity:.6;">My Way AI</div>
+        </div>
       </div>
       <button id="aiClose" class="ai-close-btn">✕</button>
     </div>

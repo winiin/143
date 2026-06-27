@@ -353,3 +353,66 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-hei
   text-align: center;
   margin-bottom: 14px;
 }
+
+/* ═══ NEW FEATURES ═══ */
+
+/* Edit transaction button */
+.tx-edit{
+  background:transparent;border:none;color:var(--tx3);
+  cursor:pointer;width:22px;height:22px;border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;transition:all .12s;flex-shrink:0;
+}
+.tx-edit:hover{background:rgba(124,58,237,.14);color:var(--acc2);}
+
+/* Quick price edit button */
+.qedit-btn{
+  font-size:9px;color:var(--tx3);cursor:pointer;
+  background:transparent;border:none;padding:0;
+  transition:color .15s;line-height:1;
+}
+.qedit-btn:hover{color:var(--acc2);}
+
+/* Credit/loan items */
+.credit-item{
+  padding:14px;background:var(--bg3);
+  border:1px solid var(--brd);border-radius:var(--r);
+  margin-bottom:9px;
+}
+
+/* Trial countdown in dashboard */
+.trial-countdown{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(16,185,129,.1);
+  border:1px solid rgba(16,185,129,.25);
+  border-radius:20px;padding:4px 12px;
+  font-size:11px;font-weight:700;color:var(--green);
+  cursor:pointer;margin-top:8px;
+}
+.trial-countdown:hover{background:rgba(16,185,129,.18);}
+
+/* Daily quest timer badge */
+.quest-timer{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 10px;
+  background:rgba(6,182,212,.07);
+  border:1px solid rgba(6,182,212,.2);
+  border-radius:var(--rsm);
+  margin-bottom:9px;
+  font-size:11px;color:var(--cyan);
+}
+
+/* Auth success message */
+.auth-success{
+  background:var(--gd);border:1px solid rgba(16,185,129,.3);
+  color:var(--green);padding:9px 12px;
+  border-radius:var(--rsm);font-size:12px;
+}
+
+/* Grid2 fix — was conflicting with auth .g2 glow */
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+
+@media(max-width:600px){
+  .grid2,.grid3{grid-template-columns:1fr;}
+}
