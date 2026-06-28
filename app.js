@@ -755,7 +755,7 @@ function renderHeader() {
       <select class="sel" id="curSel">${curOpts}</select>
       <span class="badge b-green"><i class="fas fa-heartbeat"></i> ${health}%</span>
       <span class="badge b-gold"><i class="fas fa-star"></i> Lv.${DATA.level}</span>
-      <span class="badge" style="background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.2);" title="Дней бесплатного периода осталось">🎁 ${trialDaysLeft()} дн. Free</span>
+      <span class="badge" style="background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.2);cursor:pointer;" title="Дней бесплатного периода осталось" onclick="showPaywall()">🎁 ${trialDaysLeft()} дн. Free</span>
       <button class="theme-btn" id="themeBtn"><i class="fas fa-${DARK?'sun':'moon'}"></i></button>
     </div>`;
 
@@ -1682,9 +1682,16 @@ async function importPDFForCard(file, cardId) {
     const data = await response.json();
     if (data.error) throw new Error(data.error.message || 'API error');
     const text = data.content?.[0]?.text || '';
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('JSON не найден');
-    const parsed = JSON.parse(jsonMatch[0]);
+    const stripped2 = text.replace(/```json|```/gi, '');
+    const allMatches2 = stripped2.match(/\{[\s\S]*\}/);
+    if (!allMatches2) throw new Error('JSON не найден');
+    let parsed;
+    try { parsed = JSON.parse(allMatches2[0]); }
+    catch(e) {
+      const lb = stripped2.lastIndexOf('}'), fb = stripped2.indexOf('{');
+      if (fb === -1 || lb === -1) throw new Error('JSON не найден');
+      parsed = JSON.parse(stripped2.slice(fb, lb + 1));
+    }
     if (parsed.error) throw new Error(parsed.error);
 
     const txs = (parsed.transactions || []).map((tx, i) => ({
@@ -2423,19 +2430,31 @@ function renderImportTab() {
               source: { type: 'base64', media_type: 'application/pdf', data: base64 }
             }, {
               type: 'text',
-              text: 'Проанализируй эту банковскую выписку и верни JSON с транзакциями и анализом как указано в системном промпте. Верни ТОЛЬКО JSON, без пояснений.'
+              text: 'Проанализируй эту банковскую выписку и верни JSON с транзакциями и анализом как указано в системном промпте. Верни ТОЛЬКО чистый JSON без markdown, без ```json, без пояснений — только сам JSON объект.'
             }]
           }]
         })
       });
 
       const data = await response.json();
+      if (data.error) throw new Error(data.error.message || 'Ошибка API');
       const text = data.content?.[0]?.text || '';
 
-      // Parse JSON from response
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('JSON не найден в ответе');
-      const parsed = JSON.parse(jsonMatch[0]);
+      // Parse JSON from response — strip markdown fences, find largest JSON object
+      const stripped = text.replace(/```json|```/gi, '');
+      const jsonMatches = [...stripped.matchAll(/\{[\s\S]*?\}/g)];
+      // Pick the longest match (most complete JSON)
+      const allMatches = stripped.match(/\{[\s\S]*\}/);
+      if (!allMatches) throw new Error('JSON не найден в ответе');
+      let parsed;
+      try { parsed = JSON.parse(allMatches[0]); }
+      catch(e) {
+        // Try to find valid JSON by trimming to last closing brace
+        const lastBrace = stripped.lastIndexOf('}');
+        const firstBrace = stripped.indexOf('{');
+        if (firstBrace === -1 || lastBrace === -1) throw new Error('JSON не найден в ответе');
+        parsed = JSON.parse(stripped.slice(firstBrace, lastBrace + 1));
+      }
 
       if (parsed.error) throw new Error(parsed.error);
 
