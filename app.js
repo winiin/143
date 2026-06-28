@@ -1478,23 +1478,47 @@ function renderCardsTab() {
 }
 
 function renderCardsList() {
-  const list=document.getElementById('cardsList'); if(!list) return;
-  if(!DATA.cards.length){
-    list.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--tx3);"><i class="fas fa-credit-card" style="font-size:36px;opacity:.2;display:block;margin-bottom:10px;"></i>${t('noCards')}</div>`;
+  const list = document.getElementById('cardsList');
+  if (!list) return;
+  if (!DATA.cards.length) {
+    list.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--tx3);">
+      <i class="fas fa-credit-card" style="font-size:36px;opacity:.2;display:block;margin-bottom:10px;"></i>
+      ${t('noCards')}
+    </div>`;
     return;
   }
-  list.innerHTML=DATA.cards.map(c=>{
-    const sp=cardSpent(c.id); const tc=cardTxCount(c.id);
 
-    // Month stats for this card
-    const now=new Date(); const monthStart=new Date(now.getFullYear(),now.getMonth(),1).getTime();
-    const monthSpent=DATA.transactions.filter(t=>t.cardId===c.id&&t.type==='expense'&&t.date>=monthStart).reduce((s,t)=>s+t.amount,0);
+  list.innerHTML = DATA.cards.map(c => {
+    const allTxs   = DATA.transactions.filter(tx => tx.cardId === c.id);
+    const expTxs   = allTxs.filter(tx => tx.type === 'expense');
+    const incTxs   = allTxs.filter(tx => tx.type === 'income');
+    const totalSp  = expTxs.reduce((s, tx) => s + tx.amount, 0);
+    const totalInc = incTxs.reduce((s, tx) => s + tx.amount, 0);
+    const balance  = totalInc - totalSp; // net on this card
 
-    const cats={};
-    DATA.transactions.filter(t=>t.cardId===c.id&&t.type==='expense').forEach(t=>{cats[t.category]=(cats[t.category]||0)+t.amount;});
-    const top=Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,3);
-    return `<div>
-      <div class="bank-card" style="background:${CARD_BG[c.color]||CARD_BG.purple};margin-bottom:10px;">
+    // This month
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const monthExp = expTxs.filter(tx => tx.date >= monthStart).reduce((s,tx) => s + tx.amount, 0);
+    const monthInc = incTxs.filter(tx => tx.date >= monthStart).reduce((s,tx) => s + tx.amount, 0);
+
+    // Last 7 days
+    const week = Date.now() - 7 * 86400000;
+    const weekSp = expTxs.filter(tx => tx.date >= week).reduce((s,tx) => s + tx.amount, 0);
+
+    // Categories breakdown
+    const cats = {};
+    expTxs.forEach(tx => { cats[tx.category] = (cats[tx.category] || 0) + tx.amount; });
+    const topCats = Object.entries(cats).sort((a,b) => b[1] - a[1]);
+    const maxCatAmt = topCats[0]?.[1] || 1;
+
+    // Recent txs (last 3)
+    const recent = [...allTxs].sort((a,b) => b.date - a.date).slice(0, 3);
+
+    return `<div style="background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r);overflow:hidden;">
+
+      <!-- Card visual -->
+      <div class="bank-card" style="background:${CARD_BG[c.color]||CARD_BG.purple};border-radius:0;position:relative;">
         <button class="card-del-btn" data-id="${c.id}"><i class="fas fa-times"></i></button>
         <div class="bc-top"><div class="bc-bank">${c.bank}</div><div class="bc-type">${c.type.toUpperCase()}</div></div>
         <div class="bc-chip">▣ ▣</div>
@@ -1504,19 +1528,219 @@ function renderCardsList() {
           <div><div style="font-size:8px;color:rgba(255,255,255,.5);">СРОК</div><div class="bc-holder">${c.expiry}</div></div>
         </div>
       </div>
-      <div style="font-size:12px;margin-bottom:8px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:var(--tx3);">${t('spent')}</span><strong style="color:var(--red);">${fmtAmt(sp)}</strong></div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:var(--tx3);">Этот месяц</span><strong style="color:var(--red);">${fmtAmt(monthSpent)}</strong></div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="color:var(--tx3);">${t('numOps')}</span><strong>${tc}</strong></div>
-        ${top.map(([cat,a])=>`<div class="card-stat-row"><div class="cs-dot" style="background:var(--acc);"></div><span style="flex:1;font-size:11px;">${catEmoji(cat)} ${cat}</span><span style="font-weight:700;font-size:11px;color:var(--red);">${fmtAmt(a)}</span></div>`).join('')}
+
+      <!-- Key stats row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--brd);">
+        <div style="padding:11px;text-align:center;border-right:1px solid var(--brd);">
+          <div style="font-size:10px;color:var(--tx3);margin-bottom:3px;">Потрачено всего</div>
+          <div style="font-size:15px;font-weight:800;color:var(--red);">${fmtAmt(totalSp)}</div>
+        </div>
+        <div style="padding:11px;text-align:center;border-right:1px solid var(--brd);">
+          <div style="font-size:10px;color:var(--tx3);margin-bottom:3px;">Этот месяц</div>
+          <div style="font-size:15px;font-weight:800;color:var(--red);">${fmtAmt(monthExp)}</div>
+        </div>
+        <div style="padding:11px;text-align:center;">
+          <div style="font-size:10px;color:var(--tx3);margin-bottom:3px;">За 7 дней</div>
+          <div style="font-size:15px;font-weight:800;color:var(--gold);">${fmtAmt(weekSp)}</div>
+        </div>
       </div>
-      <button class="btn btn-outline btn-sm wf add-spend-card" data-id="${c.id}"><i class="fas fa-plus"></i> ${t('addSpend')}</button>
+
+      <div style="padding:12px 14px;">
+
+        ${topCats.length ? `
+        <!-- Spending by category -->
+        <div style="margin-bottom:12px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--tx3);margin-bottom:8px;">Куда уходят деньги</div>
+          ${topCats.slice(0,5).map(([cat, amt]) => {
+            const pct = Math.round(amt / maxCatAmt * 100);
+            const pctOfTotal = totalSp > 0 ? Math.round(amt / totalSp * 100) : 0;
+            return `<div style="margin-bottom:7px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px;">
+                <span>${catEmoji(cat)} ${cat}</span>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <span style="font-size:10px;color:var(--tx3);">${pctOfTotal}%</span>
+                  <strong style="color:var(--red);">${fmtAmt(amt)}</strong>
+                </div>
+              </div>
+              <div style="height:4px;background:var(--bg4);border-radius:4px;overflow:hidden;">
+                <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:4px;"></div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>` : ''}
+
+        ${recent.length ? `
+        <!-- Recent transactions -->
+        <div style="margin-bottom:12px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--tx3);margin-bottom:7px;">Последние операции</div>
+          ${recent.map(tx => {
+            const d = new Date(tx.date).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit'});
+            return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--brd);">
+              <div class="tx-ic ${tx.type}" style="width:26px;height:26px;border-radius:7px;flex-shrink:0;font-size:10px;"><i class="fas fa-${tx.type==='income'?'arrow-down':'arrow-up'}"></i></div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${tx.text}</div>
+                <div style="font-size:10px;color:var(--tx3);">${d} · ${tx.category}</div>
+              </div>
+              <div style="font-size:12px;font-weight:700;color:${tx.type==='income'?'var(--green)':'var(--red)'};">
+                ${tx.type==='income'?'+':'-'}${fmtAmt(tx.amount)}
+              </div>
+            </div>`;
+          }).join('')}
+        </div>` : ''}
+
+        <!-- Action buttons -->
+        <div style="display:flex;gap:7px;">
+          <button class="btn btn-outline btn-sm add-spend-card" data-id="${c.id}" style="flex:1;justify-content:center;">
+            <i class="fas fa-plus"></i> Добавить трату
+          </button>
+          <button class="btn btn-outline btn-sm import-card-pdf" data-id="${c.id}" style="flex:1;justify-content:center;">
+            <i class="fas fa-file-pdf" style="color:#ef4444;"></i> Загрузить выписку
+          </button>
+        </div>
+
+        <!-- PDF import hidden input per card -->
+        <input type="file" accept=".pdf" class="card-pdf-input" data-id="${c.id}" style="display:none;"/>
+
+      </div>
     </div>`;
   }).join('');
-  list.querySelectorAll('.card-del-btn').forEach(b=>b.addEventListener('click',()=>delCard(parseInt(b.dataset.id))));
-  list.querySelectorAll('.add-spend-card').forEach(b=>{
-    b.addEventListener('click',()=>{const v=prompt(t('spendQ'));if(v)addTx(v,parseInt(b.dataset.id));});
+
+  // Bind events
+  list.querySelectorAll('.card-del-btn').forEach(b => {
+    b.addEventListener('click', () => delCard(parseInt(b.dataset.id)));
   });
+  list.querySelectorAll('.add-spend-card').forEach(b => {
+    b.addEventListener('click', () => {
+      const v = prompt(t('spendQ'));
+      if (v) addTx(v, parseInt(b.dataset.id));
+    });
+  });
+
+  // PDF import per card
+  list.querySelectorAll('.import-card-pdf').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const inp = list.querySelector(`.card-pdf-input[data-id="${btn.dataset.id}"]`);
+      if (inp) inp.click();
+    });
+  });
+  list.querySelectorAll('.card-pdf-input').forEach(inp => {
+    inp.addEventListener('change', () => {
+      if (inp.files[0]) importPDFForCard(inp.files[0], parseInt(inp.dataset.id));
+    });
+  });
+}
+
+async function importPDFForCard(file, cardId) {
+  const card = DATA.cards.find(c => c.id === cardId);
+  if (!card) return;
+
+  // Show loading toast
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;bottom:80px;right:20px;z-index:9999;background:var(--bg2);border:1px solid var(--brd2);border-radius:var(--r);padding:14px 18px;font-size:13px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;max-width:300px;';
+  toast.innerHTML = `<div style="display:flex;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--acc2);animation:typingBounce 1.2s infinite;"></div><div style="width:6px;height:6px;border-radius:50%;background:var(--acc2);animation:typingBounce 1.2s infinite .2s;"></div><div style="width:6px;height:6px;border-radius:50%;background:var(--acc2);animation:typingBounce 1.2s infinite .4s;"></div></div><span>ИИ читает выписку ${card.bank}...</span>`;
+  document.body.appendChild(toast);
+
+  try {
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const systemPrompt = `Ты финансовый аналитик. Извлеки ВСЕ транзакции из банковской выписки.
+Верни ТОЛЬКО JSON без пояснений:
+{"transactions":[{"text":"описание","amount":1500,"type":"expense","category":"Кафе/доставка","date":"2024-01-15"},...],
+"analysis":{"totalIncome":0,"totalExpense":0,"topCategory":"","summary":"","tips":[],"monthBalance":""}}
+Категории: Транспорт,Учёба,Здоровье,Связь/подписки,Одежда/обувь,Красота/уход,Кафе/доставка,Подарки,Развлечения,Большая покупка,Поездка/путешествие,Зарплата,Стипендия,Перевод от семьи,Другое`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'pdfs-2024-09-25',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4000,
+        system: systemPrompt,
+        messages: [{
+          role: 'user',
+          content: [{
+            type: 'document',
+            source: { type: 'base64', media_type: 'application/pdf', data: base64 }
+          }, {
+            type: 'text',
+            text: 'Извлеки транзакции из этой банковской выписки и верни JSON.'
+          }]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message || 'API error');
+    const text = data.content?.[0]?.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('JSON не найден');
+    const parsed = JSON.parse(jsonMatch[0]);
+    if (parsed.error) throw new Error(parsed.error);
+
+    const txs = (parsed.transactions || []).map((tx, i) => ({
+      id: DATA.nextId + i,
+      text: tx.text || 'Операция',
+      amount: Math.abs(Number(tx.amount) || 0),
+      type: tx.type === 'income' ? 'income' : 'expense',
+      category: tx.category || 'Другое',
+      date: tx.date ? new Date(tx.date).getTime() : Date.now(),
+      cardId: cardId  // ← linked to THIS card
+    }));
+    DATA.nextId += txs.length;
+
+    const anal = parsed.analysis || {};
+    DATA.transactions.push(...txs);
+    saveData(); checkAch();
+
+    toast.remove();
+
+    // Show result modal
+    const modal = document.createElement('div');
+    modal.className = 'modal-ov';
+    modal.innerHTML = `<div class="modal-box" style="max-width:420px;">
+      <div class="modal-hdr">
+        <h3><i class="fas fa-file-pdf" style="color:#ef4444;"></i> Выписка импортирована</h3>
+        <button class="modal-close" onclick="this.closest('.modal-ov').remove()">✕</button>
+      </div>
+      <div style="text-align:center;margin-bottom:16px;">
+        <div style="font-size:36px;">✅</div>
+        <div style="font-size:15px;font-weight:700;margin-top:6px;">Добавлено ${txs.length} операций</div>
+        <div style="font-size:12px;color:var(--tx3);">Карта ${card.bank} •••• ${card.number}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+        <div style="padding:12px;background:rgba(16,185,129,.08);border-radius:var(--r);text-align:center;">
+          <div style="font-size:10px;color:var(--tx3);">Доходы</div>
+          <div style="font-size:16px;font-weight:800;color:var(--green);">+${fmtAmt(anal.totalIncome||0)}</div>
+        </div>
+        <div style="padding:12px;background:rgba(244,63,94,.08);border-radius:var(--r);text-align:center;">
+          <div style="font-size:10px;color:var(--tx3);">Расходы</div>
+          <div style="font-size:16px;font-weight:800;color:var(--red);">-${fmtAmt(anal.totalExpense||0)}</div>
+        </div>
+      </div>
+      ${anal.summary ? `<div style="padding:12px;background:var(--bg3);border-radius:var(--r);font-size:12px;color:var(--tx2);line-height:1.6;margin-bottom:12px;">${anal.summary}</div>` : ''}
+      ${anal.tips?.length ? `<div style="margin-bottom:14px;">${anal.tips.map(tip=>`<div style="display:flex;gap:8px;padding:5px 0;font-size:12px;color:var(--tx2);border-bottom:1px solid var(--brd);">
+        <span style="color:var(--acc2);">💡</span><span>${tip}</span></div>`).join('')}</div>` : ''}
+      <button class="btn btn-primary wf" onclick="this.closest('.modal-ov').remove();renderCardsTab()" style="justify-content:center;">
+        <i class="fas fa-credit-card"></i> Смотреть на карте
+      </button>
+    </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+
+  } catch(err) {
+    toast.remove();
+    alert('❌ Ошибка чтения PDF: ' + (err.message || 'Проверьте файл'));
+  }
 }
 
 // ── STATISTICS TAB ─────────────────────
@@ -2186,6 +2410,7 @@ function renderImportTab() {
         headers: {
           'Content-Type': 'application/json',
           'anthropic-version': '2023-06-01',
+          'anthropic-beta': 'pdfs-2024-09-25',
           'anthropic-dangerous-direct-browser-access': 'true'
         },
         body: JSON.stringify({
@@ -2198,7 +2423,7 @@ function renderImportTab() {
               source: { type: 'base64', media_type: 'application/pdf', data: base64 }
             }, {
               type: 'text',
-              text: 'Проанализируй эту банковскую выписку и верни JSON с транзакциями и анализом как указано.'
+              text: 'Проанализируй эту банковскую выписку и верни JSON с транзакциями и анализом как указано в системном промпте. Верни ТОЛЬКО JSON, без пояснений.'
             }]
           }]
         })

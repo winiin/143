@@ -61,17 +61,12 @@
       <div class="fld">
         <i class="fas fa-lock fi"></i>
         <input type="password" id="loginPassword" placeholder="Пароль" autocomplete="current-password"/>
-        <button class="pass-eye" id="loginEye" type="button"><i class="fas fa-eye"></i></button>
+
       </div>
       <button class="btn btn-primary wf" id="loginBtn">
         <i class="fas fa-sign-in-alt"></i> <span id="loginBtnTxt">Войти</span>
       </button>
-      <!-- Forgot password link -->
-      <div style="text-align:center;margin-top:4px;">
-        <button id="forgotBtn" class="forgot-link" type="button">
-          <i class="fas fa-key"></i> <span id="forgotTxt">Забыли пароль?</span>
-        </button>
-      </div>
+
       <div class="auth-hint" id="authDemo">Демо: demo@myway.kz / Demo@123!</div>
       <div id="loginError" class="auth-error hidden"></div>
       <div id="loginSuccess" class="auth-success hidden"></div>
@@ -106,63 +101,6 @@
       <div id="registerSuccess" class="auth-success hidden"></div>
     </div>
 
-    <!-- ── FORGOT PASSWORD FORM (hidden by default) ── -->
-    <div id="forgotForm" class="auth-form hidden">
-      <div style="text-align:center;margin-bottom:14px;">
-        <div style="font-size:32px;margin-bottom:6px;">🔑</div>
-        <div style="font-size:14px;font-weight:700;color:var(--tx);" id="forgotTitle">Восстановление пароля</div>
-        <div style="font-size:12px;color:var(--tx3);margin-top:4px;" id="forgotDesc">Введите email — пришлём код подтверждения</div>
-      </div>
-      <!-- Step 1: Enter email -->
-      <div id="forgotStep1">
-        <div class="fld">
-          <i class="fas fa-envelope fi"></i>
-          <input type="email" id="forgotEmail" placeholder="Ваш email" autocomplete="email"/>
-        </div>
-        <button class="btn btn-primary wf" id="forgotSendBtn">
-          <i class="fas fa-paper-plane"></i> <span id="forgotSendTxt">Отправить код</span>
-        </button>
-      </div>
-      <!-- Step 2: Enter code + new password -->
-      <div id="forgotStep2" class="hidden">
-        <div class="code-sent-badge" id="codeSentBadge">
-          <i class="fas fa-envelope-open-text"></i>
-          <span id="codeSentMsg">Код отправлен на email</span>
-        </div>
-        <div class="fld">
-          <i class="fas fa-hashtag fi"></i>
-          <input type="text" id="forgotCode" placeholder="Код из письма (6 цифр)" maxlength="6" autocomplete="one-time-code"
-            style="letter-spacing:6px;font-size:18px;font-weight:700;text-align:center;"/>
-        </div>
-        <div class="fld">
-          <i class="fas fa-lock fi"></i>
-          <input type="password" id="forgotNewPass" placeholder="Новый пароль" autocomplete="new-password"/>
-          <button class="pass-eye" id="forgotEye" type="button"><i class="fas fa-eye"></i></button>
-        </div>
-        <div class="pass-rules" style="margin-bottom:8px;">
-          <span id="fpr-len" class="pr">• Мин. 6 символов</span>
-          <span id="fpr-upper" class="pr">• 1 заглавная</span>
-          <span id="fpr-lower" class="pr">• 1 строчная</span>
-          <span id="fpr-num" class="pr">• 1 цифра</span>
-          <span id="fpr-spec" class="pr">• 1 спецсимвол</span>
-        </div>
-        <div class="fld">
-          <i class="fas fa-lock fi"></i>
-          <input type="password" id="forgotConfirmPass" placeholder="Повторите пароль" autocomplete="new-password"/>
-        </div>
-        <button class="btn btn-success wf" id="forgotConfirmBtn">
-          <i class="fas fa-check"></i> <span id="forgotConfirmTxt">Сменить пароль</span>
-        </button>
-        <button class="btn btn-ghost wf" id="forgotResendBtn" style="margin-top:6px;font-size:12px;justify-content:center;">
-          <i class="fas fa-redo"></i> <span id="forgotResendTxt">Отправить код повторно</span>
-        </button>
-      </div>
-      <div id="forgotError" class="auth-error hidden" style="margin-top:10px;"></div>
-      <div id="forgotSuccess" class="auth-success hidden" style="margin-top:10px;"></div>
-      <!-- Back to login -->
-      <button class="forgot-link" id="backToLoginBtn" style="margin-top:10px;width:100%;justify-content:center;">
-        <i class="fas fa-arrow-left"></i> <span id="backLoginTxt">Вернуться ко входу</span>
-      </button>
     </div>
 
   </div>
