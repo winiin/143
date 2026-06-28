@@ -2390,7 +2390,6 @@ function renderImportTab() {
     const res = document.getElementById('importResult');
     const prev = document.getElementById('importPreview');
 
-    // Show loading
     res.innerHTML = `<div style="display:flex;align-items:center;gap:10px;padding:14px;background:var(--bg3);border-radius:var(--r);font-size:13px;">
       <div style="display:flex;gap:3px;">
         <div style="width:7px;height:7px;border-radius:50%;background:var(--acc2);animation:typingBounce 1.2s infinite;"></div>
@@ -2402,26 +2401,24 @@ function renderImportTab() {
     prev.style.display = 'none';
 
     try {
-      // Convert PDF to base64
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      // Extract text from PDF using PDF.js (no API key needed)
+      const arrayBuffer = await file.arrayBuffer();
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+      }
+      if (!fullText.trim()) throw new Error('Не удалось извлечь текст из PDF');
 
-      // Send to Claude AI for analysis
-      const systemPrompt = `Ты финансовый аналитик. Пользователь загрузил PDF банковскую выписку.
-Твоя задача:
-1. Извлечь все транзакции (дата, описание, сумма, тип — доход/расход)
-2. Проанализировать финансовое состояние
-3. Дать конкретные советы по оптимизации расходов
-
-ОБЯЗАТЕЛЬНО верни ответ в формате JSON:
+      // Send extracted text to Claude via regular aiCall (no API key required)
+      const systemPrompt = `Ты финансовый аналитик. Тебе дан текст банковской выписки.
+Извлеки все транзакции и верни ТОЛЬКО чистый JSON без markdown, без \`\`\`json, без пояснений:
 {
   "transactions": [
-    {"text": "Описание", "amount": 1500, "type": "expense", "category": "Кафе/Доставка", "date": "2024-01-15"},
-    ...
+    {"text": "Описание/магазин", "amount": 1500, "type": "expense", "category": "Кафе/доставка", "date": "2026-06-28"}
   ],
   "analysis": {
     "totalIncome": 0,
@@ -2429,62 +2426,23 @@ function renderImportTab() {
     "topCategory": "название",
     "summary": "краткий анализ",
     "tips": ["совет 1", "совет 2", "совет 3"],
-    "monthBalance": "плюс/минус и сколько"
+    "monthBalance": "+/- сумма"
   }
 }
-Категории расходов: Транспорт, Учёба, Здоровье, Связь/подписки, Одежда/обувь, Красота/уход, Кафе/доставка, Подарки, Развлечения, Большая покупка, Поездка/путешествие, Другое
-Категории доходов: Зарплата, Стипендия, Перевод от семьи, Другой доход
-Если не можешь прочитать PDF или файл не является банковской выпиской — верни {"error": "описание проблемы"}`;
+type: "income" для пополнений/зачислений, "expense" для покупок/переводов/снятий.
+Категории расходов: Транспорт, Учёба, Здоровье, Связь/подписки, Одежда/обувь, Красота/уход, Кафе/доставка, Подарки, Развлечения, Большая покупка, Переводы, Другое
+Категории доходов: Зарплата, Стипендия, Перевод от семьи, Другой доход`;
 
-      const apiKey = localStorage.getItem('mw_api_key') || '';
-      if (!apiKey) {
-        res.innerHTML = `<div style='padding:12px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:var(--r);font-size:13px;color:var(--red);'><b>❌ API ключ не указан</b><br><span style='font-size:11px;color:var(--tx3);'>Введите и сохраните ваш Anthropic API ключ выше</span></div>`;
-        return;
-      }
-      const pdfHeaders = {
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'pdfs-2024-09-25',
-        'anthropic-dangerous-direct-browser-access': 'true',
-        'x-api-key': apiKey
-      };
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: pdfHeaders,
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 4000,
-          messages: [{
-            role: 'user',
-            content: [{
-              type: 'document',
-              source: { type: 'base64', media_type: 'application/pdf', data: base64 }
-            }, {
-              type: 'text',
-              text: 'Проанализируй эту банковскую выписку и верни JSON с транзакциями и анализом как указано в системном промпте. Верни ТОЛЬКО чистый JSON без markdown, без ```json, без пояснений — только сам JSON объект.'
-            }]
-          }]
-        })
-      });
-
-      const data = await response.json();
-      if (data.error) throw new Error(data.error.message || 'Ошибка API');
-      const text = data.content?.[0]?.text || '';
-
-      // Parse JSON from response — strip markdown fences, find largest JSON object
-      const stripped = text.replace(/```json|```/gi, '');
-      const jsonMatches = [...stripped.matchAll(/\{[\s\S]*?\}/g)];
-      // Pick the longest match (most complete JSON)
+      const raw = await aiCall(systemPrompt, 'Вот текст выписки:\n' + fullText.slice(0, 8000), 4000);
+      const stripped = raw.replace(/```json|```/gi, '').trim();
       const allMatches = stripped.match(/\{[\s\S]*\}/);
       if (!allMatches) throw new Error('JSON не найден в ответе');
       let parsed;
       try { parsed = JSON.parse(allMatches[0]); }
       catch(e) {
-        // Try to find valid JSON by trimming to last closing brace
-        const lastBrace = stripped.lastIndexOf('}');
-        const firstBrace = stripped.indexOf('{');
-        if (firstBrace === -1 || lastBrace === -1) throw new Error('JSON не найден в ответе');
-        parsed = JSON.parse(stripped.slice(firstBrace, lastBrace + 1));
+        const lb = stripped.lastIndexOf('}'), fb = stripped.indexOf('{');
+        if (fb === -1 || lb === -1) throw new Error('Не удалось разобрать ответ');
+        parsed = JSON.parse(stripped.slice(fb, lb + 1));
       }
 
       if (parsed.error) throw new Error(parsed.error);
@@ -2507,7 +2465,6 @@ function renderImportTab() {
 
       prev.style.display = 'block';
 
-      // Show AI analysis
       const anal = parsed.analysis || {};
       const aiResult = document.getElementById('aiAnalysisResult');
       aiResult.innerHTML = `
@@ -2536,7 +2493,6 @@ function renderImportTab() {
           ` : ''}
         </div>`;
 
-      // Show transactions preview
       const plist = document.getElementById('previewList');
       plist.innerHTML = `<div style="font-size:12px;font-weight:700;color:var(--tx3);margin-bottom:8px;">ОПЕРАЦИИ (первые 10 из ${importedTxs.length}):</div>` +
         importedTxs.slice(0,10).map(tx => `<div class="tx-item">
@@ -2549,7 +2505,6 @@ function renderImportTab() {
         </div>`).join('') +
         (importedTxs.length > 10 ? `<div style="text-align:center;padding:8px;font-size:11px;color:var(--tx3);">... и ещё ${importedTxs.length-10} операций</div>` : '');
 
-      // Action buttons
       document.getElementById('importActions').innerHTML = `
         <button class="btn btn-success" style="flex:1;justify-content:center;" id="confirmImport">
           <i class="fas fa-check"></i> Импортировать все ${importedTxs.length}
