@@ -249,7 +249,7 @@ function defaultData() {
     activeGoalId:null, level:1, xp:0, rank:'Bronze',
     nextId:1, currency:'KZT', lang:'ru', joinedAt:Date.now(),
     premium:false, premiumSince:null, premiumPlan:null,
-    trialStart:Date.now(), savedCard:null,
+    trialStart:null, savedCard:null, // trialStart set ONCE at registration, never reset
     quests:[], dailyQuestDate:null,
     credits:[],
     quickPrices:{coffee:350,lunch:1500,taxi:800,groceries:5000,salary:300000,invest:20000},
@@ -271,7 +271,13 @@ function loadData() {
   try{
     const a=getAccounts();
     const u=a[CUR_USER.email];
-    if(u&&u.data) DATA=Object.assign(defaultData(),u.data);
+    if(u&&u.data) {
+      DATA=Object.assign(defaultData(),u.data);
+      // ВАЖНО: trialStart берётся ТОЛЬКО из сохранённых данных пользователя
+      // чтобы таймер не сбрасывался при каждом входе
+      if(u.data.trialStart) DATA.trialStart = u.data.trialStart;
+      else if(u.joinedAt) DATA.trialStart = u.joinedAt; // fallback к дате регистрации
+    }
     if(!DATA.deposits) DATA.deposits=[];
     if(!DATA.cards) DATA.cards=[];
     CUR_KEY = localStorage.getItem('mw_cur_'+CUR_USER.email)||'KZT';
@@ -280,29 +286,25 @@ function loadData() {
 }
 
 function isPremium() {
-  if(!DATA) return false;
-  if(DATA.premium && DATA.premiumSince) {
-    // Check subscription not expired
-    const plan = DATA.premiumPlan;
-    const since = DATA.premiumSince;
-    if(plan==='monthly') return (Date.now()-since) < 31*864e5;
-    if(plan==='yearly')  return (Date.now()-since) < 366*864e5;
-    return true; // legacy premium
-  }
+  // Премиум не используется — всё бесплатно в течение 30 дней с регистрации
   return false;
 }
 
 function isTrialActive() {
-  if(isPremium()) return true;
-  const start = DATA.trialStart || DATA.joinedAt || Date.now();
-  const days = (Date.now()-start)/864e5;
-  return days < 30;
+  // Таймер идёт ТОЛЬКО с даты регистрации (trialStart).
+  // При входе/выходе таймер НЕ сбрасывается.
+  if(!DATA) return true;
+  const start = DATA.trialStart;
+  if(!start) return true;
+  const daysSinceReg = (Date.now() - start) / 864e5;
+  return daysSinceReg < 30;
 }
 
 function trialDaysLeft() {
-  const start = DATA.trialStart || DATA.joinedAt || Date.now();
-  const days = Math.max(0, Math.ceil(30 - (Date.now()-start)/864e5));
-  return days;
+  if(!DATA) return 30;
+  const start = DATA.trialStart;
+  if(!start) return 30;
+  return Math.max(0, Math.ceil(30 - (Date.now() - start) / 864e5));
 }
 
 // ── DAILY QUESTS POOL ──────────────────
@@ -364,7 +366,8 @@ function initAuth() {
   if(!accs['demo@myway.kz']||accs['demo@myway.kz'].password!==demoHash){
     const demoData=accs['demo@myway.kz']?.data||defaultData();
     demoData.premium=true;
-    accs['demo@myway.kz']={name:'Демо',email:'demo@myway.kz',password:demoHash,data:demoData,joinedAt:Date.now()-31*864e5};
+    demoData.trialStart = Date.now(); // Demo always has fresh 30-day trial
+    accs['demo@myway.kz']={name:'Демо',email:'demo@myway.kz',password:demoHash,data:demoData,joinedAt:Date.now()};
     saveAccounts(accs);
   }
 
@@ -496,7 +499,7 @@ function doRegister() {
   if(!passCheck.ok){showErr('registerError','❌ '+passCheck.msg);return;}
   const accs=getAccounts();
   if(accs[email]){showErr('registerError',t('emailExists'));return;}
-  const d=defaultData(); d.lang=LANG;
+  const d=defaultData(); d.lang=LANG; d.trialStart=Date.now(); // Set ONCE at registration
   accs[email]={name,email,password:hashPass(pass),data:d,joinedAt:Date.now()};
   saveAccounts(accs);
   CUR_USER={name,email,avatar:name.charAt(0).toUpperCase()};
@@ -751,8 +754,7 @@ function renderHeader() {
       <select class="sel" id="curSel">${curOpts}</select>
       <span class="badge b-green"><i class="fas fa-heartbeat"></i> ${health}%</span>
       <span class="badge b-gold"><i class="fas fa-star"></i> Lv.${DATA.level}</span>
-      ${!isPremium()&&isTrialActive()?`<span class="badge" style="background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.2);cursor:pointer;" onclick="showPaywall()">🎁 ${trialDaysLeft()} дн. Free</span>`:''}
-      ${isPremium()?`<span class="badge" style="background:rgba(245,158,11,.12);color:var(--gold);border:1px solid rgba(245,158,11,.2);cursor:pointer;" onclick="showPaywall()">⭐ Premium</span>`:''}
+      <span class="badge" style="background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.2);" title="Дней бесплатного периода осталось">🎁 ${trialDaysLeft()} дн. Free</span>
       <button class="theme-btn" id="themeBtn"><i class="fas fa-${DARK?'sun':'moon'}"></i></button>
     </div>`;
 
@@ -785,12 +787,7 @@ function initMobileToggle() {
 }
 
 function renderActiveTab(tab) {
-  // Show paywall for premium features when trial expired
-  const premiumTabs=['ai','stats','credits'];
-  if(premiumTabs.includes(tab)&&!isTrialActive()){
-    showPaywall();
-    // Still show locked version
-  }
+  // All tabs are free during 30-day trial from registration
   const fns={dashboard:renderDashboard,transactions:renderTxTab,cards:renderCardsTab,
     deposits:renderDepositsTab,stats:renderStatsTab,goals:renderGoalsTab,
     gamification:renderGamTab,ai:renderAITab,tips:renderTipsTab,import:renderImportTab,
@@ -869,144 +866,28 @@ function activatePremium() {
 }
 
 function showPaywall(source='') {
-  document.querySelectorAll('.paywall-modal').forEach(m=>m.remove());
+  // Всё бесплатно 30 дней — просто показываем информацию
+  const days = trialDaysLeft();
   const modal = document.createElement('div');
   modal.className = 'modal-ov paywall-modal';
-  const cardData = DATA.savedCard;
-  const hasSavedCard = cardData && cardData.last4;
-  const days = trialDaysLeft();
-  const trialActive = isTrialActive() && !isPremium();
-
-  modal.innerHTML = `<div class="modal-box paywall-box">
-    <!-- Header -->
-    <div style="text-align:center;margin-bottom:20px;position:relative;">
-      <button style="position:absolute;right:0;top:0;background:rgba(255,255,255,.1);border:none;width:28px;height:28px;border-radius:50%;color:var(--tx2);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;" onclick="this.closest('.paywall-modal').remove()">✕</button>
-      <div style="font-size:36px;margin-bottom:8px;">⭐</div>
-      <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:800;background:linear-gradient(120deg,#fff,var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px;">My Way Premium</div>
-      ${trialActive && days>0 ? `<div style="font-size:12px;background:var(--gd);color:var(--green);padding:5px 14px;border-radius:20px;display:inline-block;">🎁 Бесплатный пробный период — ещё <strong>${days}</strong> дн.</div>` :
-        !isPremium() ? `<div style="font-size:12px;background:var(--rd);color:var(--red);padding:5px 14px;border-radius:20px;display:inline-block;">⏰ Пробный период завершён</div>` :
-        `<div style="font-size:12px;background:var(--gd);color:var(--green);padding:5px 14px;border-radius:20px;display:inline-block;">✅ Активна подписка ${DATA.premiumPlan==='yearly'?'Годовая':'Месячная'}</div>`}
+  modal.innerHTML = `<div class="modal-box" style="max-width:400px;text-align:center;">
+    <div style="font-size:48px;margin-bottom:12px;">🎁</div>
+    <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:800;margin-bottom:8px;">My Way — Бесплатно</div>
+    <div style="font-size:14px;color:var(--tx2);margin-bottom:16px;line-height:1.6;">
+      Весь первый месяц <strong>все функции</strong> открыты бесплатно.<br>
+      Осталось: <strong style="color:var(--green);font-size:18px;">${days}</strong> дней.
     </div>
-
-    <!-- Plan tabs -->
-    ${!isPremium() ? `
-    <div style="display:flex;background:var(--bg3);border-radius:10px;padding:3px;margin-bottom:16px;gap:3px;" id="planTabs">
-      <button class="plan-tab active" data-plan="monthly" style="flex:1;padding:9px 6px;border:none;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer;background:var(--acc);color:#fff;transition:all .18s;">
-        Месячный<div style="font-size:16px;font-weight:800;margin-top:2px;">3 500 ₸</div><div style="font-size:10px;opacity:.8;">/месяц</div>
-      </button>
-      <button class="plan-tab" data-plan="yearly" style="flex:1;padding:9px 6px;border:none;border-radius:8px;font-family:Inter,sans-serif;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--tx2);transition:all .18s;position:relative;">
-        <span style="position:absolute;top:4px;right:6px;background:var(--green);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px;">−17%</span>
-        Годовой<div style="font-size:16px;font-weight:800;margin-top:2px;">35 000 ₸</div><div style="font-size:10px;opacity:.8;">/год</div>
-      </button>
+    <div style="padding:12px;background:var(--bg3);border-radius:var(--r);font-size:13px;color:var(--tx2);margin-bottom:16px;">
+      ✅ Транзакции · ✅ Карты · ✅ Депозиты<br>
+      ✅ Статистика · ✅ ИИ-советник · ✅ Импорт<br>
+      ✅ Цели · ✅ Кредиты · ✅ Игра
     </div>
-
-    <!-- Features list -->
-    <div style="background:var(--bg3);border-radius:var(--r);padding:12px;margin-bottom:16px;">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin-bottom:10px;">ЧТО ВКЛЮЧЕНО</div>
-      ${[
-        ['🤖','ИИ-советник без ограничений'],
-        ['📊','Импорт банковских выписок'],
-        ['📈','Расширенная аналитика по месяцам'],
-        ['💳','Неограниченные карты и депозиты'],
-        ['🎯','Неограниченные финансовые цели'],
-        ['🔒','Приоритетная поддержка'],
-      ].map(([ic,tx])=>`<div style="display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid var(--brd);">
-        <span style="font-size:16px;">${ic}</span>
-        <span style="font-size:12px;font-weight:500;">${tx}</span>
-        <span style="margin-left:auto;color:var(--green);font-size:13px;">✓</span>
-      </div>`).join('')}
-    </div>
-
-    <!-- Saved card or payment -->
-    <div id="paymentSection">
-      ${hasSavedCard ? `
-      <div style="background:var(--bg3);border:1px solid var(--brd2);border-radius:var(--r);padding:12px;margin-bottom:12px;">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin-bottom:8px;">ОПЛАТА</div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div style="width:38px;height:24px;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;">${cardData.type||'CARD'}</div>
-          <div>
-            <div style="font-size:13px;font-weight:600;">•••• •••• •••• ${cardData.last4}</div>
-            <div style="font-size:10px;color:var(--tx3);">${cardData.holder||''} · ${cardData.expiry||''}</div>
-          </div>
-          <button onclick="showCardForm()" style="margin-left:auto;background:transparent;border:1px solid var(--brd2);border-radius:6px;color:var(--acc2);font-size:11px;padding:4px 10px;cursor:pointer;">Изменить</button>
-        </div>
-      </div>` : `<div id="cardForm" style="background:var(--bg3);border:1px solid var(--brd2);border-radius:var(--r);padding:14px;margin-bottom:12px;">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin-bottom:10px;">ДАННЫЕ КАРТЫ</div>
-        <div style="position:relative;margin-bottom:9px;"><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--tx3);">💳</span><input type="text" id="payCardNum" placeholder="0000 0000 0000 0000" maxlength="19" style="width:100%;padding:10px 10px 10px 32px;background:var(--bg4);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;" /></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px;">
-          <input type="text" id="payExpiry" placeholder="MM / YY" maxlength="7" style="padding:10px;background:var(--bg4);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;"/>
-          <input type="text" id="payCVV" placeholder="CVV" maxlength="3" style="padding:10px;background:var(--bg4);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;"/>
-        </div>
-        <input type="text" id="payHolder" placeholder="IVAN IVANOV" style="width:100%;padding:10px;background:var(--bg4);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;text-transform:uppercase;" />
-      </div>`}
-    </div>
-
-    <button class="btn btn-primary wf" id="payBtn" style="font-size:14px;padding:14px;border-radius:12px;justify-content:center;">
-      <i class="fas fa-lock" style="font-size:12px;"></i> <span id="payBtnTxt">Оформить за 3 500 ₸/мес</span>
+    <button class="btn btn-primary wf" onclick="this.closest('.modal-ov').remove()" style="justify-content:center;">
+      <i class="fas fa-rocket"></i> Продолжить пользоваться
     </button>
-    <div style="text-align:center;margin-top:8px;font-size:10px;color:var(--tx3);">🔒 Безопасная оплата · Отмена в любое время · Автопродление</div>
-    ` : `
-    <!-- Already premium — manage subscription -->
-    <div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:14px;">
-      <div style="font-size:12px;color:var(--tx2);margin-bottom:8px;">Ваша подписка</div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;"><span style="color:var(--tx3);">Тариф</span><strong>${DATA.premiumPlan==='yearly'?'Годовой — 35 000 ₸':'Месячный — 3 500 ₸'}</strong></div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--tx3);">Следующее списание</span><strong>${getSubscriptionStatus().expiry||'—'}</strong></div>
-    </div>
-    ${DATA.savedCard?.last4?`<div style="background:var(--bg3);border:1px solid var(--brd2);border-radius:var(--r);padding:12px;margin-bottom:12px;">
-      <div style="font-size:10px;color:var(--tx3);margin-bottom:6px;">Карта оплаты</div>
-      <div style="font-size:13px;font-weight:600;">•••• •••• •••• ${DATA.savedCard.last4}</div>
-    </div>`:''}
-    <button class="btn btn-danger wf" onclick="cancelSubscription()" style="justify-content:center;"><i class="fas fa-times"></i> Отменить подписку</button>
-    `}
   </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
-
-  // Plan tab switching
-  if(!isPremium()){
-    let selPlan='monthly';
-    modal.querySelectorAll('.plan-tab').forEach(tab=>{
-      tab.addEventListener('click',function(){
-        selPlan=this.dataset.plan;
-        modal.querySelectorAll('.plan-tab').forEach(t=>{
-          t.style.background=t.dataset.plan===selPlan?'var(--acc)':'transparent';
-          t.style.color=t.dataset.plan===selPlan?'#fff':'var(--tx2)';
-        });
-        const btnTxt=document.getElementById('payBtnTxt');
-        if(btnTxt) btnTxt.textContent=selPlan==='yearly'?'Оформить за 35 000 ₸/год':'Оформить за 3 500 ₸/мес';
-      });
-    });
-
-    // Card number formatting
-    const cn=document.getElementById('payCardNum');
-    if(cn) cn.addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').replace(/(.{4})/g,'$1 ').trim().slice(0,19);});
-    const ex=document.getElementById('payExpiry');
-    if(ex) ex.addEventListener('input',function(){let v=this.value.replace(/\D/g,'');if(v.length>=3)v=v.slice(0,2)+' / '+v.slice(2,4);this.value=v;});
-    const h=document.getElementById('payHolder');
-    if(h) h.addEventListener('input',function(){this.value=this.value.toUpperCase();});
-
-    // Pay button
-    const payBtn=document.getElementById('payBtn');
-    if(payBtn){
-      payBtn.addEventListener('click',()=>{
-        // Validate card if no saved card
-        const hasSaved=DATA.savedCard?.last4;
-        if(!hasSaved){
-          const num=(document.getElementById('payCardNum')?.value||'').replace(/\s/g,'');
-          const expiry=document.getElementById('payExpiry')?.value||'';
-          const cvv=document.getElementById('payCVV')?.value||'';
-          const holder=document.getElementById('payHolder')?.value||'';
-          if(num.length<16){alert('Введите корректный номер карты (16 цифр)');return;}
-          if(!expiry||expiry.length<4){alert('Введите срок действия карты');return;}
-          if(cvv.length<3){alert('Введите CVV (3 цифры)');return;}
-          if(!holder.trim()){alert('Введите имя держателя карты');return;}
-          DATA.savedCard={last4:num.slice(-4),expiry:expiry.replace(' ',''),holder:holder.trim(),type:'CARD'};
-        }
-        // Process payment with animation
-        processPayment(selPlan, payBtn, modal);
-      });
-    }
-  }
+  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
 }
 
 function showCardForm() {
@@ -1843,11 +1724,7 @@ function renderAch() {
 
 // ── AI TAB ─────────────────────────────
 function renderAITab() {
-  if(!isTrialActive()){
-    const feats=['🎯 Анализ финансов и советы','📊 Прогноз расходов','💡 Персональные рекомендации','🗣️ Чат с финансовым ИИ','📈 Сравнение периодов'];
-    document.getElementById('content').innerHTML='<div class="card" style="text-align:center;padding:36px 20px;"><div style="font-size:48px;margin-bottom:10px;">🤖</div><div style="font-family:Space Grotesk,sans-serif;font-size:18px;font-weight:700;margin-bottom:6px;">ИИ-советник</div><div style="font-size:13px;color:var(--tx2);margin-bottom:18px;">Персональный финансовый советник с анализом расходов и прогнозами</div><div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:18px;text-align:left;">'+feats.map(f=>'<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--brd);"><span>'+f+'</span><span style="margin-left:auto;color:var(--gold);">⭐</span></div>').join('')+'</div><button class="btn btn-primary wf" style="justify-content:center;font-size:14px;padding:13px;" onclick="showPaywall()"><i class="fas fa-star"></i> Оформить Premium от 3 500 ₸/мес</button></div>';
-    return;
-  }
+  // AI tab is free during 30-day trial
   document.getElementById('content').innerHTML=`
     <div class="grid2" style="margin-bottom:14px;">
       <div class="card">
@@ -2084,19 +1961,7 @@ function renderTipsTab() {
 
 // ── IMPORT TAB ─────────────────────────
 function renderImportTab() {
-  if(!isPremium()) {
-    document.getElementById('content').innerHTML=`
-      <div class="card" style="text-align:center;padding:40px 20px;position:relative;">
-        <div style="font-size:48px;margin-bottom:12px;">📊</div>
-        <div style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px;">${t('importTitle')}</div>
-        <div style="font-size:13px;color:var(--tx2);margin-bottom:20px;max-width:360px;margin-left:auto;margin-right:auto;">${t('importDesc')}</div>
-        <div style="padding:18px;background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(6,182,212,.07));border:1px solid rgba(124,58,237,.28);border-radius:var(--r);margin-bottom:20px;">
-          <div style="font-size:15px;font-weight:700;margin-bottom:6px;">⭐ ${t('premTitle')}</div>
-          <div style="font-size:12px;color:var(--tx2);margin-bottom:14px;">${t('premDesc')}</div>
-          <button class="btn btn-primary" onclick="activatePremium()">${t('premBtn')}</button>
-        </div>
-      </div>`;
-    return;
+  // Import is free during 30-day trial
   }
   document.getElementById('content').innerHTML=`
     <div class="card" style="margin-bottom:14px;">
