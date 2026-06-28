@@ -861,11 +861,26 @@ function showProfile() {
       <div style="font-size:11px;color:var(--tx2);margin-bottom:10px;">Оформите подписку для доступа ко всем функциям</div>
       <button class="btn btn-primary wf" style="font-size:12px;justify-content:center;" onclick="document.getElementById('profileModal').remove();showPaywall()"><i class="fas fa-star"></i> Оформить от 3 500 ₸/мес</button>
     </div>`}
+    <div style="margin-top:12px;padding:12px;background:var(--bg3);border-radius:var(--r);">
+      <div style="font-size:11px;font-weight:700;color:var(--tx3);margin-bottom:6px;">🔑 API ключ для ИИ-функций</div>
+      <div style="display:flex;gap:6px;">
+        <input type="password" id="profileApiKey" placeholder="sk-ant-..." value="${localStorage.getItem('mw_api_key')||''}"
+          style="flex:1;padding:8px 10px;background:var(--bg2);border:1px solid var(--brd2);border-radius:8px;font-size:12px;color:var(--tx);outline:none;"/>
+        <button id="saveProfileKey" style="padding:8px 12px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">Сохранить</button>
+      </div>
+      <div style="font-size:10px;color:var(--tx3);margin-top:3px;">Нужен для PDF-анализа · <a href="https://console.anthropic.com/keys" target="_blank" style="color:var(--acc2);">Получить ключ</a></div>
+    </div>
     <button class="btn btn-danger wf" style="margin-top:12px;" onclick="document.getElementById('profileModal').remove();doLogout()">
       <i class="fas fa-sign-out-alt"></i> ${t('logout')}
     </button>
   </div>`;
   document.body.appendChild(m);
+  const skBtn = document.getElementById('saveProfileKey');
+  if (skBtn) skBtn.addEventListener('click', () => {
+    const v = (document.getElementById('profileApiKey')?.value || '').trim();
+    if (v) { localStorage.setItem('mw_api_key', v); skBtn.textContent = '✓'; skBtn.style.background='var(--green)'; setTimeout(()=>{skBtn.textContent='Сохранить';skBtn.style.background='var(--acc)';},2000); }
+    else alert('Введите ключ');
+  });
   m.addEventListener('click',e=>{if(e.target===m)m.remove();});
 }
 
@@ -2157,12 +2172,16 @@ function buildCtx() {
 }
 
 async function aiCall(systemPrompt, userMsg, maxTokens=500) {
+  const storedKey = localStorage.getItem('mw_api_key') || '';
+  const headers = {'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+  if (storedKey) headers['x-api-key'] = storedKey;
   const res=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
-    headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    headers,
     body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTokens,system:systemPrompt,messages:[{role:'user',content:userMsg}]})
   });
   const data=await res.json();
+  if (data.error) throw new Error(data.error.message || 'API error');
   return data.content?.[0]?.text||'';
 }
 
@@ -2333,15 +2352,6 @@ function renderImportTab() {
       <div class="clbl"><i class="fas fa-file-pdf" style="color:#ef4444;"></i> ${t('importTitle')}</div>
       <div style="margin-top:8px;font-size:13px;color:var(--tx2);line-height:1.6;">${t('importDesc')}</div>
 
-      <div style="margin-top:12px;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--tx3);margin-bottom:6px;">🔑 Anthropic API ключ</div>
-        <div style="display:flex;gap:8px;">
-          <input type="password" id="pdfApiKey" placeholder="sk-ant-..." value="${localStorage.getItem('mw_api_key')||''}"
-            style="flex:1;padding:9px 12px;background:var(--bg3);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:12px;color:var(--tx);outline:none;"/>
-          <button id="saveApiKeyBtn" style="padding:9px 14px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">Сохранить</button>
-        </div>
-        <div style="font-size:10px;color:var(--tx3);margin-top:4px;">Получить ключ: <a href="https://console.anthropic.com/keys" target="_blank" style="color:var(--acc2);">console.anthropic.com/keys</a> · Ключ хранится только в вашем браузере</div>
-      </div>
 
       <div style="border:2px dashed var(--brd2);border-radius:var(--r);padding:36px 20px;text-align:center;cursor:pointer;margin-top:14px;transition:all .2s;" id="dropZone">
         <i class="fas fa-file-pdf" style="font-size:42px;color:#ef4444;margin-bottom:12px;display:block;"></i>
