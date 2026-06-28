@@ -1654,13 +1654,15 @@ async function importPDFForCard(file, cardId) {
 "analysis":{"totalIncome":0,"totalExpense":0,"topCategory":"","summary":"","tips":[],"monthBalance":""}}
 Категории: Транспорт,Учёба,Здоровье,Связь/подписки,Одежда/обувь,Красота/уход,Кафе/доставка,Подарки,Развлечения,Большая покупка,Поездка/путешествие,Зарплата,Стипендия,Перевод от семьи,Другое`;
 
+    const cardApiKey = localStorage.getItem('mw_api_key') || '';
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'anthropic-version': '2023-06-01',
         'anthropic-beta': 'pdfs-2024-09-25',
-        'anthropic-dangerous-direct-browser-access': 'true'
+        'anthropic-dangerous-direct-browser-access': 'true',
+        ...(cardApiKey ? {'x-api-key': cardApiKey} : {})
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
@@ -2331,6 +2333,16 @@ function renderImportTab() {
       <div class="clbl"><i class="fas fa-file-pdf" style="color:#ef4444;"></i> ${t('importTitle')}</div>
       <div style="margin-top:8px;font-size:13px;color:var(--tx2);line-height:1.6;">${t('importDesc')}</div>
 
+      <div style="margin-top:12px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--tx3);margin-bottom:6px;">🔑 Anthropic API ключ</div>
+        <div style="display:flex;gap:8px;">
+          <input type="password" id="pdfApiKey" placeholder="sk-ant-..." value="${localStorage.getItem('mw_api_key')||''}"
+            style="flex:1;padding:9px 12px;background:var(--bg3);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:12px;color:var(--tx);outline:none;"/>
+          <button id="saveApiKeyBtn" style="padding:9px 14px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">Сохранить</button>
+        </div>
+        <div style="font-size:10px;color:var(--tx3);margin-top:4px;">Получить ключ: <a href="https://console.anthropic.com/keys" target="_blank" style="color:var(--acc2);">console.anthropic.com/keys</a> · Ключ хранится только в вашем браузере</div>
+      </div>
+
       <div style="border:2px dashed var(--brd2);border-radius:var(--r);padding:36px 20px;text-align:center;cursor:pointer;margin-top:14px;transition:all .2s;" id="dropZone">
         <i class="fas fa-file-pdf" style="font-size:42px;color:#ef4444;margin-bottom:12px;display:block;"></i>
         <div style="font-size:15px;font-weight:700;margin-bottom:4px;">${t('importBtn')}</div>
@@ -2352,6 +2364,18 @@ function renderImportTab() {
   const drop = document.getElementById('dropZone');
   const fileInp = document.getElementById('importFile');
   let importedTxs = [];
+
+  // Save API key button
+  const saveKeyBtn = document.getElementById('saveApiKeyBtn');
+  if (saveKeyBtn) saveKeyBtn.addEventListener('click', () => {
+    const v = (document.getElementById('pdfApiKey')?.value || '').trim();
+    if (v) {
+      localStorage.setItem('mw_api_key', v);
+      saveKeyBtn.textContent = '✓ Сохранён';
+      saveKeyBtn.style.background = 'var(--green)';
+      setTimeout(() => { saveKeyBtn.textContent = 'Сохранить'; saveKeyBtn.style.background = 'var(--acc)'; }, 2000);
+    } else { alert('Введите API ключ'); }
+  });
 
   drop.addEventListener('click', () => fileInp.click());
   drop.addEventListener('dragover', e => { e.preventDefault(); drop.style.borderColor='var(--acc)'; drop.style.background='rgba(124,58,237,.05)'; });
@@ -2412,14 +2436,21 @@ function renderImportTab() {
 Категории доходов: Зарплата, Стипендия, Перевод от семьи, Другой доход
 Если не можешь прочитать PDF или файл не является банковской выпиской — верни {"error": "описание проблемы"}`;
 
+      const apiKey = localStorage.getItem('mw_api_key') || '';
+      if (!apiKey) {
+        res.innerHTML = `<div style='padding:12px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:var(--r);font-size:13px;color:var(--red);'><b>❌ API ключ не указан</b><br><span style='font-size:11px;color:var(--tx3);'>Введите и сохраните ваш Anthropic API ключ выше</span></div>`;
+        return;
+      }
+      const pdfHeaders = {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'pdfs-2024-09-25',
+        'anthropic-dangerous-direct-browser-access': 'true',
+        'x-api-key': apiKey
+      };
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'anthropic-version': '2023-06-01',
-          'anthropic-beta': 'pdfs-2024-09-25',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
+        headers: pdfHeaders,
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
           max_tokens: 4000,
