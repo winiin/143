@@ -416,3 +416,16 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-hei
 @media(max-width:600px){
   .grid2,.grid3{grid-template-columns:1fr;}
 }
+
+/* ═══ PAYMENT COMING SOON ═══ */
+.payment-soon-modal .modal-box {
+  animation: slideUp .25s cubic-bezier(.4,0,.2,1);
+}
+@keyframes popIn {
+  from { transform: scale(.5); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}

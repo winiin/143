@@ -1027,44 +1027,177 @@ function showCardForm() {
 }
 
 function processPayment(plan, btn, modal) {
-  btn.disabled=true;
-  btn.innerHTML='<span style="display:inline-flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" style="animation:spin .7s linear infinite;fill:none;stroke:#fff;stroke-width:2.5;"><circle cx="12" cy="12" r="10" stroke-opacity=".2"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> Обработка платежа...</span>';
+  // Validate card fields if no saved card
+  const hasSaved = DATA.savedCard?.last4;
+  if (!hasSaved) {
+    const num = (document.getElementById('payCardNum')?.value||'').replace(/\s/g,'');
+    const expiry = document.getElementById('payExpiry')?.value||'';
+    const cvv = document.getElementById('payCVV')?.value||'';
+    const holder = document.getElementById('payHolder')?.value||'';
+    if (num.length < 16) { alert('Введите корректный номер карты (16 цифр)'); return; }
+    if (!expiry || expiry.replace(/\s/g,'').length < 4) { alert('Введите срок действия'); return; }
+    if (cvv.length < 3) { alert('Введите CVV'); return; }
+    if (!holder.trim()) { alert('Введите имя держателя'); return; }
+    DATA.savedCard = {
+      last4: num.slice(-4),
+      expiry: expiry.replace(/\s/g,''),
+      holder: holder.trim().toUpperCase(),
+      type: 'CARD'
+    };
+  }
 
-  // Simulate payment processing (2 seconds)
-  setTimeout(()=>{
-    DATA.premium=true;
-    DATA.premiumSince=Date.now();
-    DATA.premiumPlan=plan;
-    saveData();
+  // Animate button
+  btn.disabled = true;
+  btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;">' +
+    '<svg width="16" height="16" viewBox="0 0 24 24" style="animation:spin .7s linear infinite;fill:none;stroke:#fff;stroke-width:2.5;">' +
+    '<circle cx="12" cy="12" r="10" stroke-opacity=".2"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>' +
+    ' Проверка данных...</span>';
+
+  setTimeout(() => {
     modal.remove();
-    showPaymentSuccess(plan);
-    renderHeader();
-  }, 2000);
+    showPaymentComingSoon(plan);
+  }, 1800);
+}
+
+function showPaymentComingSoon(plan) {
+  document.querySelectorAll('.paywall-modal,.payment-soon-modal').forEach(m => m.remove());
+  const modal = document.createElement('div');
+  modal.className = 'modal-ov payment-soon-modal';
+
+  const amount = plan === 'yearly' ? '35 000 ₸' : '3 500 ₸';
+  const period = plan === 'yearly' ? 'год' : 'месяц';
+  const card = DATA.savedCard;
+
+  // Collect waitlist emails in localStorage
+  const waitlist = JSON.parse(localStorage.getItem('mw_waitlist') || '[]');
+  const alreadyIn = waitlist.includes(CUR_USER.email);
+
+  modal.innerHTML = `
+  <div class="modal-box" style="max-width:420px;padding:0;overflow:hidden;">
+
+    <!-- Top gradient header -->
+    <div style="background:linear-gradient(135deg,#7c3aed,#06b6d4);padding:28px 24px 22px;text-align:center;position:relative;">
+      <button onclick="this.closest('.payment-soon-modal').remove()"
+        style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,.15);border:none;width:28px;height:28px;border-radius:50%;color:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">✕</button>
+      <div style="font-size:48px;margin-bottom:8px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1);">🚀</div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:800;color:#fff;margin-bottom:4px;">Оплата скоро будет!</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.75);">Мы подключаем платёжную систему</div>
+    </div>
+
+    <div style="padding:22px 22px 24px;">
+
+      <!-- What was selected -->
+      <div style="background:var(--bg3);border:1px solid var(--brd2);border-radius:var(--r);padding:14px;margin-bottom:18px;">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin-bottom:10px;">ВЫ ВЫБРАЛИ</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div>
+            <div style="font-size:15px;font-weight:800;">${plan === 'yearly' ? 'Годовой тариф' : 'Месячный тариф'}</div>
+            <div style="font-size:11px;color:var(--tx3);">${plan === 'yearly' ? 'Экономия 17% vs месячного' : 'Автопродление каждый месяц'}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:20px;font-weight:800;color:var(--acc2);">${amount}</div>
+            <div style="font-size:10px;color:var(--tx3);">/ ${period}</div>
+          </div>
+        </div>
+        ${card ? `<div style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--bg4);border-radius:8px;">
+          <div style="width:32px;height:20px;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;color:#fff;">CARD</div>
+          <div>
+            <div style="font-size:12px;font-weight:600;">•••• •••• •••• ${card.last4}</div>
+            <div style="font-size:10px;color:var(--tx3);">${card.holder} · ${card.expiry}</div>
+          </div>
+          <span style="margin-left:auto;font-size:10px;color:var(--tx3);background:var(--bg3);padding:2px 7px;border-radius:20px;">Сохранена</span>
+        </div>` : ''}
+      </div>
+
+      <!-- Coming soon explanation -->
+      <div style="background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.2);border-radius:var(--r);padding:14px;margin-bottom:16px;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px;">⚙️ Что происходит?</div>
+        <div style="font-size:12px;color:var(--tx2);line-height:1.65;">
+          Мы сейчас подключаем <strong>Kaspi Pay</strong> и другие платёжные системы Казахстана.
+          Как только оплата будет готова — вы получите <strong>уведомление на email</strong>
+          и <strong>первый месяц бесплатно</strong> как ранний пользователь. 🎁
+        </div>
+      </div>
+
+      <!-- Waitlist signup -->
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--tx3);margin-bottom:8px;">
+          <i class="fas fa-bell"></i> УВЕДОМИТЬ МЕНЯ
+        </div>
+        ${alreadyIn ? `
+        <div style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:var(--gd);border:1px solid rgba(16,185,129,.25);border-radius:var(--r);">
+          <span style="font-size:18px;">✅</span>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--green);">Вы в списке ожидания!</div>
+            <div style="font-size:11px;color:var(--tx3);">${CUR_USER.email}</div>
+          </div>
+        </div>` : `
+        <div style="display:flex;gap:7px;">
+          <input id="waitlistEmail" type="email" value="${CUR_USER.email}"
+            style="flex:1;padding:10px 12px;background:var(--bg3);border:1px solid var(--brd2);border-radius:var(--rsm);font-family:Inter,sans-serif;font-size:12px;color:var(--tx);outline:none;"
+            placeholder="Ваш email"/>
+          <button id="waitlistBtn" class="btn btn-primary" style="white-space:nowrap;">
+            <i class="fas fa-bell"></i> Оповестить
+          </button>
+        </div>
+        <div style="font-size:10px;color:var(--tx3);margin-top:5px;">Получите +1 месяц бесплатно при подключении оплаты</div>
+        `}
+      </div>
+
+      <!-- What's already free -->
+      <div style="background:var(--bg3);border-radius:var(--r);padding:12px;margin-bottom:16px;">
+        <div style="font-size:10px;font-weight:700;color:var(--tx3);margin-bottom:8px;">ПОКА ВСЁ БЕСПЛАТНО — 30 ДНЕЙ</div>
+        ${[
+          ['✅','Все транзакции и категории'],
+          ['✅','Банковские карты и депозиты'],
+          ['✅','Финансовые цели'],
+          ['✅','ИИ-советник'],
+          ['✅','Импорт выписок'],
+          ['✅','Статистика и аналитика'],
+        ].map(([ic,tx]) => `<div style="font-size:11px;margin-bottom:4px;">${ic} ${tx}</div>`).join('')}
+      </div>
+
+      <button class="btn btn-success wf" onclick="this.closest('.payment-soon-modal').remove()"
+        style="justify-content:center;font-size:14px;padding:13px;">
+        <i class="fas fa-rocket"></i> Понятно, продолжить бесплатно!
+      </button>
+
+      <div style="text-align:center;margin-top:10px;font-size:10px;color:var(--tx3);">
+        🔒 Данные вашей карты не хранятся на сервере<br>
+        Реальное списание будет только после подключения платёжной системы
+      </div>
+    </div>
+  </div>`;
+
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+  // Waitlist button
+  const wBtn = document.getElementById('waitlistBtn');
+  const wInp = document.getElementById('waitlistEmail');
+  if (wBtn && wInp) {
+    wBtn.addEventListener('click', () => {
+      const email = wInp.value.trim().toLowerCase();
+      if (!email.includes('@')) { alert('Введите корректный email'); return; }
+      const list = JSON.parse(localStorage.getItem('mw_waitlist') || '[]');
+      if (!list.includes(email)) { list.push(email); localStorage.setItem('mw_waitlist', JSON.stringify(list)); }
+      // Show success state
+      wBtn.closest('div').parentElement.innerHTML = `
+        <div style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:var(--gd);border:1px solid rgba(16,185,129,.25);border-radius:var(--r);">
+          <span style="font-size:18px;">✅</span>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--green);">Вы в списке ожидания!</div>
+            <div style="font-size:11px;color:var(--tx3);">${email}</div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--tx3);margin-top:5px;">Получите +1 месяц бесплатно при подключении оплаты</div>`;
+    });
+  }
 }
 
 function showPaymentSuccess(plan) {
-  const modal=document.createElement('div'); modal.className='modal-ov';
-  const amount=plan==='yearly'?'35 000 ₸':'3 500 ₸';
-  const period=plan==='yearly'?'год':'месяц';
-  const expiry=plan==='yearly'?
-    new Date(Date.now()+366*864e5).toLocaleDateString('ru-RU',{day:'2-digit',month:'long',year:'numeric'}):
-    new Date(Date.now()+31*864e5).toLocaleDateString('ru-RU',{day:'2-digit',month:'long',year:'numeric'});
-  modal.innerHTML=`<div class="modal-box" style="text-align:center;padding:36px 28px;">
-    <div style="font-size:64px;margin-bottom:12px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1);">🎉</div>
-    <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:800;color:var(--green);margin-bottom:6px;">Оплата прошла!</div>
-    <div style="font-size:13px;color:var(--tx2);margin-bottom:20px;">My Way Premium активирован</div>
-    <div style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:20px;text-align:left;">
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;"><span style="color:var(--tx3);">Тариф</span><strong>${plan==='yearly'?'Годовой':'Месячный'}</strong></div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;"><span style="color:var(--tx3);">Списано</span><strong style="color:var(--green);">${amount}</strong></div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;"><span style="color:var(--tx3);">Карта</span><strong>•••• ${DATA.savedCard?.last4||'****'}</strong></div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--tx3);">Действует до</span><strong>${expiry}</strong></div>
-    </div>
-    <button class="btn btn-success wf" onclick="this.closest('.modal-ov').remove()" style="justify-content:center;font-size:14px;padding:13px;">
-      <i class="fas fa-check"></i> Отлично!
-    </button>
-  </div>`;
-  document.body.appendChild(modal);
-  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+  // Redirect to coming soon page instead
+  showPaymentComingSoon(plan);
 }
 
 function cancelSubscription() {
