@@ -291,13 +291,14 @@ function isPremium() {
 }
 
 function isTrialActive() {
-  // Таймер идёт ТОЛЬКО с даты регистрации (trialStart).
-  // При входе/выходе таймер НЕ сбрасывается.
-  if(!DATA) return true;
-  const start = DATA.trialStart;
-  if(!start) return true;
-  const daysSinceReg = (Date.now() - start) / 864e5;
-  return daysSinceReg < 30;
+  // Timer counts from REGISTRATION date — real calendar days
+  // Doesn't matter if user logs in or not — days always pass
+  if (!DATA) return true;
+  if (isPremium()) return true;
+  const start = DATA.trialStart || DATA.joinedAt;
+  if (!start) return true; // No start date = brand new user = give trial
+  const daysPassed = (Date.now() - start) / 86400000;
+  return daysPassed < 30;
 }
 
 function trialDaysLeft() {
@@ -787,7 +788,15 @@ function initMobileToggle() {
 }
 
 function renderActiveTab(tab) {
-  // All tabs are free during 30-day trial from registration
+  // All features free for 30 calendar days from registration date
+  // After 30 days: AI, Stats, Import, Credits require Premium
+  if (!isTrialActive() && !isPremium()) {
+    const premiumOnlyTabs = ['ai','stats','import','credits'];
+    if (premiumOnlyTabs.includes(tab)) {
+      showPaywall();
+      // Also render a locked version so user sees what's behind paywall
+    }
+  }
   const fns={dashboard:renderDashboard,transactions:renderTxTab,cards:renderCardsTab,
     deposits:renderDepositsTab,stats:renderStatsTab,goals:renderGoalsTab,
     gamification:renderGamTab,ai:renderAITab,tips:renderTipsTab,import:renderImportTab,
@@ -1961,8 +1970,7 @@ function renderTipsTab() {
 
 // ── IMPORT TAB ─────────────────────────
 function renderImportTab() {
-  // Import is free during 30-day trial
-  }
+  // Import is free during 30-day trial — no paywall
   document.getElementById('content').innerHTML=`
     <div class="card" style="margin-bottom:14px;">
       <div class="clbl"><i class="fas fa-file-import"></i> ${t('importTitle')}</div>
