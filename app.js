@@ -10,7 +10,7 @@ const L = {
     loginBtn:'Войти', registerBtn:'Создать аккаунт',
     emailPh:'Email', passPh:'Пароль', namePh:'Ваше имя', passPh2:'Пароль',
     demo:'Демо: demo@myway.kz / Demo@123!',
-    nav:{dashboard:'Дашборд',transactions:'Транзакции',cards:'Карты',deposits:'Депозиты',stats:'Статистика',goals:'Цели',gamification:'Игра',ai:'ИИ-советник',tips:'Советы мудрецов',import:'Импорт',credits:'Кредиты'},
+    nav:{dashboard:'Дашборд',transactions:'Транзакции',cards:'Карты',deposits:'Депозиты',stats:'Статистика',goals:'Цели',gamification:'Игра',ai:'ИИ-советник',tips:'Советы мудрецов',import:'Импорт PDF',credits:'Кредиты'},
     balance:'Баланс', income:'Доходы', expense:'Расходы',
     txTitle:'Добавить операцию', txPh:'"Кофе 350" или "Зарплата 200000"',
     addBtn:'Добавить', clearBtn:'Очистить',
@@ -27,9 +27,9 @@ const L = {
     aiTitle:'ИИ-советник', aiGreet:'Привет! 👋 Я ваш финансовый советник. Спрашивайте о расходах, накоплениях, целях!',
     aiPh:'Задайте вопрос...', aiAnalysis:'Анализ финансов', refreshBtn:'Обновить',
     tipsTitle:'Советы мудрецов', tipsDesc:'Принципы накопления от великих инвесторов и предпринимателей',
-    importTitle:'Импорт выписки', importDesc:'Загрузите CSV-файл из банка для автоматического анализа',
-    importBtn:'Загрузить файл', importProcess:'Обработка...',
-    importSuccess:'Импортировано операций:', importError:'Не удалось распознать файл',
+    importTitle:'Анализ PDF выписки', importDesc:'Загрузите PDF-выписку из банка — ИИ автоматически распознает и проанализирует все операции',
+    importBtn:'Загрузить PDF', importProcess:'ИИ анализирует файл...',
+    importSuccess:'Импортировано операций:', importError:'Не удалось распознать PDF файл',
     monthly:'По месяцам', monthComp:'Сравнение месяцев',
     profile:'Профиль', logout:'Выйти',
     online:'Онлайн', level:'Уровень',
@@ -65,7 +65,7 @@ const L = {
     loginBtn:'Кіру', registerBtn:'Аккаунт жасау',
     emailPh:'Email', passPh:'Құпия сөз', namePh:'Атыңыз', passPh2:'Құпия сөз',
     demo:'Демо: demo@myway.kz / Demo@123!',
-    nav:{dashboard:'Басты',transactions:'Операциялар',cards:'Карталар',deposits:'Депозиттер',stats:'Статистика',goals:'Мақсаттар',gamification:'Ойын',ai:'ЖИ-кеңесші',tips:'Данышпандар кеңесі',import:'Импорт',credits:'Кредиттер'},
+    nav:{dashboard:'Басты',transactions:'Операциялар',cards:'Карталар',deposits:'Депозиттер',stats:'Статистика',goals:'Мақсаттар',gamification:'Ойын',ai:'ЖИ-кеңесші',tips:'Данышпандар кеңесі',import:'Импорт PDF',credits:'Кредиттер'},
     balance:'Баланс', income:'Кірістер', expense:'Шығыстар',
     txTitle:'Операция қосу', txPh:'"Кофе 350" немесе "Жалақы 200000"',
     addBtn:'Қосу', clearBtn:'Тазалау',
@@ -82,9 +82,9 @@ const L = {
     aiTitle:'ЖИ-кеңесші', aiGreet:'Сәлем! 👋 Мен сіздің қаржылық ЖИ-кеңесшіңізмін. Шығыстар мен жинақтар туралы сұраңыз!',
     aiPh:'Сұрақ қойыңыз...', aiAnalysis:'Қаржы талдауы', refreshBtn:'Жаңарту',
     tipsTitle:'Данышпандар кеңесі', tipsDesc:'Ұлы инвесторлар мен кәсіпкерлердің жинақтау принциптері',
-    importTitle:'Үзінді импорты', importDesc:'Автоматты талдау үшін банктен CSV файлын жүктеңіз',
-    importBtn:'Файл жүктеу', importProcess:'Өңделуде...',
-    importSuccess:'Импортталды:', importError:'Файлды тану мүмкін болмады',
+    importTitle:'PDF үзіндісін талдау', importDesc:'Банктің PDF үзіндісін жүктеңіз — ЖИ барлық операцияларды автоматты түрде тануды жүзеге асырады',
+    importBtn:'PDF жүктеу', importProcess:'ЖИ файлды талдауда...',
+    importSuccess:'Импортталды:', importError:'PDF файлды тану мүмкін болмады',
     monthly:'Ай бойынша', monthComp:'Айларды салыстыру',
     profile:'Профиль', logout:'Шығу',
     online:'Онлайн', level:'Деңгей',
@@ -120,7 +120,7 @@ const L = {
     loginBtn:'Login', registerBtn:'Create account',
     emailPh:'Email', passPh:'Password', namePh:'Your name', passPh2:'Password',
     demo:'Demo: demo@myway.kz / Demo@123!',
-    nav:{dashboard:'Dashboard',transactions:'Transactions',cards:'Cards',deposits:'Deposits',stats:'Statistics',goals:'Goals',gamification:'Game',ai:'AI Advisor',tips:'Wisdom Tips',import:'Import',credits:'Credits'},
+    nav:{dashboard:'Dashboard',transactions:'Transactions',cards:'Cards',deposits:'Deposits',stats:'Statistics',goals:'Goals',gamification:'Game',ai:'AI Advisor',tips:'Wisdom Tips',import:'PDF Import',credits:'Credits'},
     balance:'Balance', income:'Income', expense:'Expenses',
     txTitle:'Add transaction', txPh:'"Coffee 350" or "Salary 200000"',
     addBtn:'Add', clearBtn:'Clear',
@@ -137,9 +137,9 @@ const L = {
     aiTitle:'AI Advisor', aiGreet:'Hi! 👋 I\'m your financial AI advisor. Ask me about expenses, savings, or goals!',
     aiPh:'Ask a question...', aiAnalysis:'Financial analysis', refreshBtn:'Refresh',
     tipsTitle:'Wisdom Tips', tipsDesc:'Wealth-building principles from great investors and entrepreneurs',
-    importTitle:'Import statement', importDesc:'Upload a CSV file from your bank for automatic analysis',
-    importBtn:'Upload file', importProcess:'Processing...',
-    importSuccess:'Imported transactions:', importError:'Could not parse file',
+    importTitle:'PDF Bank Statement Analysis', importDesc:'Upload your bank PDF statement — AI will automatically recognize and analyze all transactions',
+    importBtn:'Upload PDF', importProcess:'AI is analyzing file...',
+    importSuccess:'Imported transactions:', importError:'Could not parse PDF file',
     monthly:'Monthly', monthComp:'Monthly comparison',
     profile:'Profile', logout:'Log out',
     online:'Online', level:'Level',
@@ -697,7 +697,7 @@ const TABS=[
   {id:'gamification', icon:'fa-gamepad'},
   {id:'ai',           icon:'fa-robot'},
   {id:'tips',         icon:'fa-lightbulb'},
-  {id:'import',       icon:'fa-file-import'},
+  {id:'import',       icon:'fa-file-pdf'},
   {id:'credits',      icon:'fa-hand-holding-usd'},
 ];
 let TAB='dashboard';
@@ -875,29 +875,154 @@ function activatePremium() {
 }
 
 function showPaywall(source='') {
-  // Всё бесплатно 30 дней — просто показываем информацию
+  document.querySelectorAll('.paywall-modal').forEach(m=>m.remove());
   const days = trialDaysLeft();
+  const isActive = isTrialActive();
   const modal = document.createElement('div');
   modal.className = 'modal-ov paywall-modal';
-  modal.innerHTML = `<div class="modal-box" style="max-width:400px;text-align:center;">
-    <div style="font-size:48px;margin-bottom:12px;">🎁</div>
-    <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:800;margin-bottom:8px;">My Way — Бесплатно</div>
-    <div style="font-size:14px;color:var(--tx2);margin-bottom:16px;line-height:1.6;">
-      Весь первый месяц <strong>все функции</strong> открыты бесплатно.<br>
-      Осталось: <strong style="color:var(--green);font-size:18px;">${days}</strong> дней.
+  modal.innerHTML = `<div class="modal-box" style="max-width:460px;">
+    <div class="modal-hdr">
+      <h3 style="font-family:'Space Grotesk',sans-serif;">
+        ${isActive ? '🎁 Бесплатный период' : '⭐ My Way Premium'}
+      </h3>
+      <button class="modal-close" onclick="this.closest('.modal-ov').remove()">✕</button>
     </div>
-    <div style="padding:12px;background:var(--bg3);border-radius:var(--r);font-size:13px;color:var(--tx2);margin-bottom:16px;">
-      ✅ Транзакции · ✅ Карты · ✅ Депозиты<br>
-      ✅ Статистика · ✅ ИИ-советник · ✅ Импорт<br>
-      ✅ Цели · ✅ Кредиты · ✅ Игра
+
+    ${isActive ? `
+    <div style="text-align:center;padding:10px 0 16px;">
+      <div style="font-size:48px;margin-bottom:8px;">🎁</div>
+      <div style="font-size:28px;font-weight:900;color:var(--green);">${days}</div>
+      <div style="font-size:13px;color:var(--tx3);">дней бесплатного доступа</div>
     </div>
-    <button class="btn btn-primary wf" onclick="this.closest('.modal-ov').remove()" style="justify-content:center;">
-      <i class="fas fa-rocket"></i> Продолжить пользоваться
+    ` : `
+    <div style="text-align:center;padding:6px 0 14px;">
+      <div style="font-size:13px;color:var(--tx2);">Бесплатный период истёк. Выберите план:</div>
+    </div>
+    `}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <!-- MONTHLY -->
+      <div class="plan-card" onclick="selectPlan('monthly',this)" style="border:2px solid var(--brd2);border-radius:var(--r);padding:16px;cursor:pointer;transition:all .2s;text-align:center;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin-bottom:6px;">Месяц</div>
+        <div style="font-size:28px;font-weight:900;color:var(--tx);">3 500</div>
+        <div style="font-size:12px;color:var(--tx3);">₸ / месяц</div>
+      </div>
+      <!-- YEARLY -->
+      <div class="plan-card" onclick="selectPlan('yearly',this)" style="border:2px solid var(--acc);border-radius:var(--r);padding:16px;cursor:pointer;transition:all .2s;text-align:center;background:rgba(124,58,237,.06);position:relative;">
+        <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--acc);color:#fff;font-size:10px;font-weight:700;padding:2px 10px;border-radius:20px;white-space:nowrap;">ВЫГОДА 17%</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--acc2);margin-bottom:6px;">Год</div>
+        <div style="font-size:28px;font-weight:900;color:var(--tx);">35 000</div>
+        <div style="font-size:12px;color:var(--tx3);">₸ / год</div>
+      </div>
+    </div>
+
+    <div style="padding:12px;background:var(--bg3);border-radius:var(--r);margin-bottom:14px;font-size:12px;color:var(--tx2);">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <div>✅ Все транзакции</div><div>✅ ИИ-советник</div>
+        <div>✅ Карты и депозиты</div><div>✅ Импорт PDF</div>
+        <div>✅ Расширенная статистика</div><div>✅ Кредиты</div>
+        <div>✅ Советы мудрецов</div><div>✅ Игра и квесты</div>
+      </div>
+    </div>
+
+    <!-- CARD FORM -->
+    <div id="paywallCardSection">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin-bottom:10px;">ОПЛАТА КАРТОЙ</div>
+      <div style="position:relative;margin-bottom:9px;">
+        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--tx3);">💳</span>
+        <input type="text" id="payCardNum" placeholder="0000 0000 0000 0000" maxlength="19"
+          style="width:100%;padding:10px 10px 10px 30px;background:var(--bg3);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;box-sizing:border-box;"/>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px;">
+        <input type="text" id="payExpiry" placeholder="MM / YY" maxlength="7"
+          style="padding:10px;background:var(--bg3);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;"/>
+        <input type="text" id="payCVV" placeholder="CVV" maxlength="3"
+          style="padding:10px;background:var(--bg3);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;"/>
+      </div>
+      <input type="text" id="payHolder" placeholder="IVAN IVANOV"
+        style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;text-transform:uppercase;box-sizing:border-box;margin-bottom:12px;"/>
+    </div>
+
+    <button class="btn btn-primary wf" id="payBtn" style="justify-content:center;font-size:14px;padding:13px;" onclick="handlePaywallPay(this, '${isActive?'monthly':'monthly'}')">
+      <i class="fas fa-lock"></i> Оформить — 3 500 ₸/мес
     </button>
+    ${isActive ? `<div style="text-align:center;margin-top:8px;font-size:11px;color:var(--tx3);">У вас есть ${days} дней бесплатно — оформить заранее</div>` : ''}
   </div>`;
+
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+
+  // Format card number
+  const cn = document.getElementById('payCardNum');
+  if(cn) cn.addEventListener('input', function(){ this.value=this.value.replace(/\D/g,'').replace(/(.{4})/g,'$1 ').trim().slice(0,19); });
+  const ex = document.getElementById('payExpiry');
+  if(ex) ex.addEventListener('input', function(){ let v=this.value.replace(/\D/g,''); if(v.length>=3)v=v.slice(0,2)+' / '+v.slice(2,4); this.value=v; });
+
+  // Default select yearly if trial expired
+  if(!isActive) {
+    const yearly = modal.querySelectorAll('.plan-card')[1];
+    if(yearly) selectPlan('yearly', yearly);
+  }
 }
+
+window._selectedPlan = 'monthly';
+function selectPlan(plan, el) {
+  window._selectedPlan = plan;
+  document.querySelectorAll('.plan-card').forEach(c => {
+    c.style.borderColor = 'var(--brd2)';
+    c.style.background = '';
+  });
+  el.style.borderColor = 'var(--acc)';
+  el.style.background = 'rgba(124,58,237,.08)';
+  const btn = document.getElementById('payBtn');
+  if(btn) {
+    const amt = plan === 'yearly' ? '35 000 ₸/год' : '3 500 ₸/мес';
+    btn.innerHTML = `<i class="fas fa-lock"></i> Оформить — ${amt}`;
+    btn.onclick = () => handlePaywallPay(btn, plan);
+  }
+}
+
+function handlePaywallPay(btn, plan) {
+  const num = (document.getElementById('payCardNum')?.value||'').replace(/\s/g,'');
+  const expiry = document.getElementById('payExpiry')?.value||'';
+  const cvv = document.getElementById('payCVV')?.value||'';
+  const holder = document.getElementById('payHolder')?.value||'';
+  if(num.length < 16){ alert('Введите корректный номер карты (16 цифр)'); return; }
+  if(!expiry || expiry.replace(/[\s\/]/g,'').length < 4){ alert('Введите срок действия карты'); return; }
+  if(cvv.length < 3){ alert('Введите CVV (3 цифры)'); return; }
+  if(!holder.trim()){ alert('Введите имя держателя карты'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" style="animation:spin .7s linear infinite;fill:none;stroke:#fff;stroke-width:2.5;"><circle cx="12" cy="12" r="10" stroke-opacity=".2"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> Обработка...</span>';
+
+  setTimeout(() => {
+    DATA.savedCard = { last4: num.slice(-4), expiry: expiry.trim(), holder: holder.trim().toUpperCase() };
+    DATA.premium = true;
+    DATA.premiumSince = Date.now();
+    DATA.premiumPlan = plan;
+    saveData();
+
+    const modal = btn.closest('.modal-ov');
+    if(modal) modal.remove();
+
+    // Show success
+    const success = document.createElement('div');
+    success.className = 'modal-ov';
+    success.innerHTML = `<div class="modal-box" style="max-width:360px;text-align:center;">
+      <div style="font-size:56px;margin-bottom:12px;">🎉</div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:800;margin-bottom:8px;">Оплата прошла!</div>
+      <div style="font-size:13px;color:var(--tx2);margin-bottom:6px;">Карта **** ${num.slice(-4)}</div>
+      <div style="font-size:13px;color:var(--tx2);margin-bottom:16px;">My Way Premium — ${plan==='yearly'?'год (35 000 ₸)':'месяц (3 500 ₸)'}</div>
+      <button class="btn btn-primary wf" style="justify-content:center;" onclick="this.closest('.modal-ov').remove()">
+        <i class="fas fa-rocket"></i> Отлично!
+      </button>
+    </div>`;
+    document.body.appendChild(success);
+    success.addEventListener('click', e => { if(e.target===success) success.remove(); });
+    renderHeader();
+  }, 1800);
+}
+
 
 function showCardForm() {
   const sec=document.getElementById('paymentSection'); if(!sec) return;
@@ -1970,82 +2095,210 @@ function renderTipsTab() {
 
 // ── IMPORT TAB ─────────────────────────
 function renderImportTab() {
-  // Import is free during 30-day trial — no paywall
   document.getElementById('content').innerHTML=`
     <div class="card" style="margin-bottom:14px;">
-      <div class="clbl"><i class="fas fa-file-import"></i> ${t('importTitle')}</div>
-      <div style="margin-top:12px;font-size:12px;color:var(--tx2);margin-bottom:14px;">${t('importDesc')}<br><br>
-        <strong>Поддерживаемые форматы:</strong> CSV (Kaspi Bank, Halyk Bank, любой банк)<br>
-        <strong>Колонки:</strong> дата, описание, сумма (расход отрицательный)
+      <div class="clbl"><i class="fas fa-file-pdf" style="color:#ef4444;"></i> ${t('importTitle')}</div>
+      <div style="margin-top:8px;font-size:13px;color:var(--tx2);line-height:1.6;">${t('importDesc')}</div>
+
+      <div style="border:2px dashed var(--brd2);border-radius:var(--r);padding:36px 20px;text-align:center;cursor:pointer;margin-top:14px;transition:all .2s;" id="dropZone">
+        <i class="fas fa-file-pdf" style="font-size:42px;color:#ef4444;margin-bottom:12px;display:block;"></i>
+        <div style="font-size:15px;font-weight:700;margin-bottom:4px;">${t('importBtn')}</div>
+        <div style="font-size:11px;color:var(--tx3);">Перетащите PDF сюда или нажмите для выбора</div>
+        <div style="margin-top:8px;font-size:11px;color:var(--tx3);">Kaspi Bank · Halyk Bank · ForteBank · любой банк</div>
+        <input type="file" id="importFile" accept=".pdf" style="display:none;"/>
       </div>
-      <div style="border:2px dashed var(--brd2);border-radius:var(--r);padding:30px;text-align:center;cursor:pointer;transition:border-color .2s;" id="dropZone">
-        <i class="fas fa-cloud-upload-alt" style="font-size:36px;color:var(--acc2);margin-bottom:10px;display:block;"></i>
-        <div style="font-size:14px;font-weight:600;margin-bottom:4px;">${t('importBtn')}</div>
-        <div style="font-size:11px;color:var(--tx3);">Перетащите CSV сюда или нажмите для выбора</div>
-        <input type="file" id="importFile" accept=".csv,.txt" style="display:none;"/>
-      </div>
+
       <div id="importResult" style="margin-top:12px;"></div>
     </div>
+
     <div class="card" id="importPreview" style="display:none;">
-      <div class="clbl"><i class="fas fa-list-check"></i> Предпросмотр импорта</div>
+      <div class="clbl"><i class="fas fa-robot" style="color:var(--acc2);"></i> ИИ-анализ выписки</div>
+      <div id="aiAnalysisResult" style="margin-top:10px;"></div>
       <div id="previewList" style="margin-top:10px;"></div>
-      <button class="btn btn-success wf" id="confirmImport" style="margin-top:10px;"><i class="fas fa-check"></i> Подтвердить импорт</button>
+      <div style="display:flex;gap:8px;margin-top:12px;" id="importActions"></div>
     </div>`;
 
-  let importedTxs=[];
-  const drop=document.getElementById('dropZone');
-  const fileInp=document.getElementById('importFile');
-  drop.addEventListener('click',()=>fileInp.click());
-  drop.addEventListener('dragover',e=>{e.preventDefault();drop.style.borderColor='var(--acc)';});
-  drop.addEventListener('dragleave',()=>{drop.style.borderColor='var(--brd2)';});
-  drop.addEventListener('drop',e=>{e.preventDefault();drop.style.borderColor='var(--brd2)';if(e.dataTransfer.files[0])parseCSV(e.dataTransfer.files[0]);});
-  fileInp.addEventListener('change',()=>{if(fileInp.files[0])parseCSV(fileInp.files[0]);});
+  const drop = document.getElementById('dropZone');
+  const fileInp = document.getElementById('importFile');
+  let importedTxs = [];
 
-  function parseCSV(file) {
-    const res=document.getElementById('importResult');
-    res.innerHTML=`<div style="color:var(--tx3);font-size:12px;">${t('importProcess')}</div>`;
-    const reader=new FileReader();
-    reader.onload=e=>{
-      const text=e.target.result;
-      const lines=text.split('\n').filter(l=>l.trim());
-      importedTxs=[];
-      for(let i=1;i<lines.length;i++){
-        const cols=lines[i].split(/[;,\t]/);
-        if(cols.length<2)continue;
-        let desc='',amount=0,date=Date.now();
-        // Try to detect date, desc, amount columns
-        for(let c=0;c<cols.length;c++){
-          const v=cols[c].replace(/"/g,'').trim();
-          const num=parseFloat(v.replace(/\s/g,'').replace(',','.'));
-          if(!isNaN(num)&&Math.abs(num)>0&&amount===0){amount=Math.abs(num);}
-          else if(v&&desc.length===0&&isNaN(parseFloat(v))){desc=v;}
-        }
-        if(amount>0&&desc){
-          importedTxs.push({text:desc,amount,type:amount>0?'expense':'income',category:'Прочее',date,id:DATA.nextId++,cardId:null});
-        }
-      }
-      if(importedTxs.length===0){res.innerHTML=`<div style="color:var(--red);font-size:12px;">${t('importError')}</div>`;return;}
-      res.innerHTML=`<div style="color:var(--green);font-size:12px;">✅ ${t('importSuccess')} ${importedTxs.length}</div>`;
-      const prev=document.getElementById('importPreview'); prev.style.display='block';
-      const plist=document.getElementById('previewList');
-      plist.innerHTML=importedTxs.slice(0,10).map(tx=>`<div class="tx-item">
-        <div class="tx-l"><div class="tx-ic expense"><i class="fas fa-arrow-up"></i></div><span class="tx-txt">${tx.text}</span></div>
-        <div class="tx-amt expense">-${fmtAmt(tx.amount)}</div>
-      </div>`).join('');
-      if(importedTxs.length>10)plist.innerHTML+=`<div style="text-align:center;padding:8px;font-size:11px;color:var(--tx3);">... и ещё ${importedTxs.length-10}</div>`;
-    };
-    reader.readAsText(file,'utf-8');
-  }
-
-  document.getElementById('confirmImport')?.addEventListener('click',()=>{
-    DATA.transactions.push(...importedTxs);
-    DATA.nextId=Math.max(DATA.nextId,...importedTxs.map(t=>t.id))+1;
-    saveData(); checkAch();
-    renderImportTab();
-    alert(`✅ Импортировано: ${importedTxs.length} операций`);
+  drop.addEventListener('click', () => fileInp.click());
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.style.borderColor='var(--acc)'; drop.style.background='rgba(124,58,237,.05)'; });
+  drop.addEventListener('dragleave', () => { drop.style.borderColor='var(--brd2)'; drop.style.background=''; });
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); drop.style.borderColor='var(--brd2)'; drop.style.background='';
+    if(e.dataTransfer.files[0]) processPDF(e.dataTransfer.files[0]);
   });
-}
+  fileInp.addEventListener('change', () => { if(fileInp.files[0]) processPDF(fileInp.files[0]); });
 
+  async function processPDF(file) {
+    const res = document.getElementById('importResult');
+    const prev = document.getElementById('importPreview');
+
+    // Show loading
+    res.innerHTML = `<div style="display:flex;align-items:center;gap:10px;padding:14px;background:var(--bg3);border-radius:var(--r);font-size:13px;">
+      <div style="display:flex;gap:3px;">
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--acc2);animation:typingBounce 1.2s infinite;"></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--acc2);animation:typingBounce 1.2s infinite .2s;"></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--acc2);animation:typingBounce 1.2s infinite .4s;"></div>
+      </div>
+      <span style="color:var(--tx2);">ИИ читает PDF и анализирует транзакции...</span>
+    </div>`;
+    prev.style.display = 'none';
+
+    try {
+      // Convert PDF to base64
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      // Send to Claude AI for analysis
+      const systemPrompt = `Ты финансовый аналитик. Пользователь загрузил PDF банковскую выписку.
+Твоя задача:
+1. Извлечь все транзакции (дата, описание, сумма, тип — доход/расход)
+2. Проанализировать финансовое состояние
+3. Дать конкретные советы по оптимизации расходов
+
+ОБЯЗАТЕЛЬНО верни ответ в формате JSON:
+{
+  "transactions": [
+    {"text": "Описание", "amount": 1500, "type": "expense", "category": "Кафе/Доставка", "date": "2024-01-15"},
+    ...
+  ],
+  "analysis": {
+    "totalIncome": 0,
+    "totalExpense": 0,
+    "topCategory": "название",
+    "summary": "краткий анализ",
+    "tips": ["совет 1", "совет 2", "совет 3"],
+    "monthBalance": "плюс/минус и сколько"
+  }
+}
+Категории расходов: Транспорт, Учёба, Здоровье, Связь/подписки, Одежда/обувь, Красота/уход, Кафе/доставка, Подарки, Развлечения, Большая покупка, Поездка/путешествие, Другое
+Категории доходов: Зарплата, Стипендия, Перевод от семьи, Другой доход
+Если не можешь прочитать PDF или файл не является банковской выпиской — верни {"error": "описание проблемы"}`;
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 4000,
+          messages: [{
+            role: 'user',
+            content: [{
+              type: 'document',
+              source: { type: 'base64', media_type: 'application/pdf', data: base64 }
+            }, {
+              type: 'text',
+              text: 'Проанализируй эту банковскую выписку и верни JSON с транзакциями и анализом как указано.'
+            }]
+          }]
+        })
+      });
+
+      const data = await response.json();
+      const text = data.content?.[0]?.text || '';
+
+      // Parse JSON from response
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('JSON не найден в ответе');
+      const parsed = JSON.parse(jsonMatch[0]);
+
+      if (parsed.error) throw new Error(parsed.error);
+
+      importedTxs = (parsed.transactions || []).map((tx, i) => ({
+        id: DATA.nextId + i,
+        text: tx.text || 'Операция',
+        amount: Math.abs(Number(tx.amount) || 0),
+        type: tx.type === 'income' ? 'income' : 'expense',
+        category: tx.category || 'Другое',
+        date: tx.date ? new Date(tx.date).getTime() : Date.now(),
+        cardId: null
+      }));
+      DATA.nextId += importedTxs.length;
+
+      res.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:var(--r);font-size:13px;color:var(--green);">
+        <i class="fas fa-check-circle"></i>
+        <strong>ИИ распознал ${importedTxs.length} транзакций из PDF</strong>
+      </div>`;
+
+      prev.style.display = 'block';
+
+      // Show AI analysis
+      const anal = parsed.analysis || {};
+      const aiResult = document.getElementById('aiAnalysisResult');
+      aiResult.innerHTML = `
+        <div style="padding:16px;background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.2);border-radius:var(--r);margin-bottom:14px;">
+          <div style="font-size:13px;font-weight:700;color:var(--acc2);margin-bottom:10px;"><i class="fas fa-chart-bar"></i> Финансовый анализ ИИ</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div style="text-align:center;padding:10px;background:rgba(16,185,129,.08);border-radius:8px;">
+              <div style="font-size:11px;color:var(--tx3);">Доходы</div>
+              <div style="font-size:16px;font-weight:800;color:var(--green);">+${fmtAmt(anal.totalIncome||0)}</div>
+            </div>
+            <div style="text-align:center;padding:10px;background:rgba(244,63,94,.08);border-radius:8px;">
+              <div style="font-size:11px;color:var(--tx3);">Расходы</div>
+              <div style="font-size:16px;font-weight:800;color:var(--red);">-${fmtAmt(anal.totalExpense||0)}</div>
+            </div>
+            <div style="text-align:center;padding:10px;background:rgba(124,58,237,.08);border-radius:8px;">
+              <div style="font-size:11px;color:var(--tx3);">Итог</div>
+              <div style="font-size:16px;font-weight:800;color:var(--acc2);">${anal.monthBalance||'—'}</div>
+            </div>
+          </div>
+          ${anal.summary ? `<div style="font-size:13px;color:var(--tx2);line-height:1.6;margin-bottom:10px;">${anal.summary}</div>` : ''}
+          ${anal.tips && anal.tips.length ? `
+            <div style="font-size:12px;font-weight:700;color:var(--tx3);margin-bottom:6px;">💡 Советы ИИ:</div>
+            ${anal.tips.map(tip => `<div style="display:flex;gap:8px;margin-bottom:5px;font-size:12px;color:var(--tx2);">
+              <span style="color:var(--acc2);flex-shrink:0;">→</span><span>${tip}</span>
+            </div>`).join('')}
+          ` : ''}
+        </div>`;
+
+      // Show transactions preview
+      const plist = document.getElementById('previewList');
+      plist.innerHTML = `<div style="font-size:12px;font-weight:700;color:var(--tx3);margin-bottom:8px;">ОПЕРАЦИИ (первые 10 из ${importedTxs.length}):</div>` +
+        importedTxs.slice(0,10).map(tx => `<div class="tx-item">
+          <div class="tx-l">
+            <div class="tx-ic ${tx.type}"><i class="fas fa-${tx.type==='income'?'arrow-down':'arrow-up'}"></i></div>
+            <span class="tx-txt">${tx.text}</span>
+            <span class="tx-cat">${tx.category}</span>
+          </div>
+          <div class="tx-amt ${tx.type}">${tx.type==='income'?'+':'-'}${fmtAmt(tx.amount)}</div>
+        </div>`).join('') +
+        (importedTxs.length > 10 ? `<div style="text-align:center;padding:8px;font-size:11px;color:var(--tx3);">... и ещё ${importedTxs.length-10} операций</div>` : '');
+
+      // Action buttons
+      document.getElementById('importActions').innerHTML = `
+        <button class="btn btn-success" style="flex:1;justify-content:center;" id="confirmImport">
+          <i class="fas fa-check"></i> Импортировать все ${importedTxs.length}
+        </button>
+        <button class="btn btn-ghost" style="flex:1;justify-content:center;" onclick="renderImportTab()">
+          <i class="fas fa-redo"></i> Загрузить другой
+        </button>`;
+
+      document.getElementById('confirmImport').addEventListener('click', () => {
+        DATA.transactions.push(...importedTxs);
+        saveData(); checkAch();
+        document.getElementById('importActions').innerHTML =
+          `<div style="color:var(--green);font-size:13px;font-weight:700;padding:10px;">✅ Импортировано ${importedTxs.length} операций! Смотрите в разделе Транзакции.</div>`;
+        importedTxs = [];
+      });
+
+    } catch(err) {
+      res.innerHTML = `<div style="padding:12px;background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.25);border-radius:var(--r);font-size:13px;color:var(--red);">
+        <i class="fas fa-exclamation-circle"></i> <strong>Ошибка:</strong> ${err.message || t('importError')}<br>
+        <span style="font-size:11px;color:var(--tx3);margin-top:4px;display:block;">Убедитесь что файл является PDF банковской выпиской</span>
+      </div>`;
+    }
+  }
+}
 
 // ══════════════════════════════════════════════════════
 // QUICK PRICE BUTTONS — editable prices
@@ -2141,6 +2394,259 @@ function showEditTxModal(tx, onSave) {
         <button class="btn ${tx.type==='expense'?'btn-danger':'btn-outline'} btn-sm et-type" data-t="expense">📤 Расход</button>
         <button class="btn ${tx.type==='income'?'btn-success':'btn-outline'} btn-sm et-type" data-t="income">📥 Доход</button>
       </div>
+    </div>
+    <div class="fgrp"><label>Категория</label>
+      <select class="finput wf" id="etCat">
+        ${cats.map(c=>`<option value="${c}" ${c===tx.category?'selected':''}>${catEmoji(c)} ${c}</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="btn btn-primary" style="flex:1;justify-content:center;" id="etSave"><i class="fas fa-check"></i> Сохранить</button>
+      <button class="btn btn-ghost" style="flex:1;justify-content:center;" onclick="this.closest('.edit-tx-modal').remove()">Отмена</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click',e=>{ if(e.target===m) m.remove(); });
+
+  let selType = tx.type;
+  m.querySelectorAll('.et-type').forEach(b=>{
+    b.addEventListener('click',()=>{
+      selType = b.dataset.t;
+      m.querySelectorAll('.et-type').forEach(x=>{
+        x.className = x.dataset.t==='expense'
+          ? `btn ${selType==='expense'?'btn-danger':'btn-outline'} btn-sm et-type`
+          : `btn ${selType==='income'?'btn-success':'btn-outline'} btn-sm et-type`;
+      });
+    });
+  });
+
+  document.getElementById('etSave').addEventListener('click',()=>{
+    const desc = document.getElementById('etDesc').value.trim();
+    const amt  = parseInt(document.getElementById('etAmt').value);
+    const cat  = document.getElementById('etCat').value;
+    if(!desc || amt<=0){ alert('Заполните все поля'); return; }
+    tx.text = desc; tx.amount = amt; tx.type = selType; tx.category = cat;
+    saveData(); m.remove(); if(onSave) onSave();
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// CREDITS / LOANS / MORTGAGE TAB
+// ══════════════════════════════════════════════════════
+function addCredit(name, totalAmount, monthlyPayment, rate, termMonths, type) {
+  if(!name||totalAmount<=0||monthlyPayment<=0){alert('Заполните все поля');return false;}
+  if(!DATA.credits) DATA.credits=[];
+  DATA.credits.push({
+    id:Date.now(), name, totalAmount, monthlyPayment,
+    rate, termMonths, type, startDate:Date.now(),
+    paid:0, active:true
+  });
+  saveData(); return true;
+}
+
+function deleteCredit(id) {
+  if(!confirm('Удалить кредит?')) return;
+  DATA.credits = (DATA.credits||[]).filter(c=>c.id!==id);
+  saveData(); renderCreditsTab();
+}
+
+function makePayment(id) {
+  const c = (DATA.credits||[]).find(x=>x.id===id); if(!c) return;
+  c.paid += c.monthlyPayment;
+  if(c.paid >= c.totalAmount){ c.paid = c.totalAmount; c.active = false; }
+  DATA.transactions.push({
+    id:DATA.nextId++, text:`Платёж: ${c.name}`,
+    amount:c.monthlyPayment, type:'expense',
+    category:'Кредит', cardId:null, date:Date.now()
+  });
+  saveData(); renderCreditsTab(); renderHeader();
+}
+
+function renderCreditsTab() {
+  if(!DATA.credits) DATA.credits=[];
+  const totalDebt = DATA.credits.filter(c=>c.active).reduce((s,c)=>s+(c.totalAmount-c.paid),0);
+  const totalMonthly = DATA.credits.filter(c=>c.active).reduce((s,c)=>s+c.monthlyPayment,0);
+
+  document.getElementById('content').innerHTML=`
+    <div class="grid2" style="margin-bottom:14px;">
+      <div class="card">
+        <div class="clbl"><i class="fas fa-plus-circle"></i> Добавить кредит / ипотеку</div>
+        <div style="margin-top:10px;">
+          <div class="fgrp"><label>Название</label>
+            <input class="finput wf" type="text" id="crName" placeholder="Ипотека Kaspi / Авто-кредит..."/>
+          </div>
+          <div class="fgrp"><label>Тип</label>
+            <select class="finput wf" id="crType">
+              <option value="mortgage">🏠 Ипотека</option>
+              <option value="auto">🚗 Авто-кредит</option>
+              <option value="consumer">💳 Потребительский</option>
+              <option value="other">📋 Другой</option>
+            </select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="fgrp"><label>Общая сумма (₸)</label>
+              <input class="finput" type="number" id="crTotal" placeholder="5000000"/>
+            </div>
+            <div class="fgrp"><label>Уже оплачено (₸)</label>
+              <input class="finput" type="number" id="crPaid" placeholder="0"/>
+            </div>
+            <div class="fgrp"><label>Платёж в месяц (₸)</label>
+              <input class="finput" type="number" id="crMonthly" placeholder="85000"/>
+            </div>
+            <div class="fgrp"><label>Ставка % год.</label>
+              <input class="finput" type="number" id="crRate" placeholder="18" step="0.1"/>
+            </div>
+          </div>
+          <button class="btn btn-primary wf" id="crAddBtn" style="margin-top:4px;">
+            <i class="fas fa-plus"></i> Добавить
+          </button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="clbl"><i class="fas fa-chart-pie"></i> Сводка долгов</div>
+        <div style="margin-top:12px;">
+          <div style="text-align:center;margin-bottom:14px;">
+            <div style="font-size:11px;color:var(--tx3);margin-bottom:4px;">Общий долг</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:800;color:var(--red);">${fmtAmt(totalDebt)}</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:9px 12px;background:var(--bg3);border-radius:var(--r);margin-bottom:7px;">
+            <span style="font-size:12px;color:var(--tx3);">Активных кредитов</span>
+            <strong>${DATA.credits.filter(c=>c.active).length}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:9px 12px;background:var(--bg3);border-radius:var(--r);margin-bottom:7px;">
+            <span style="font-size:12px;color:var(--tx3);">Платёж в месяц</span>
+            <strong style="color:var(--red);">${fmtAmt(totalMonthly)}</strong>
+          </div>
+          ${DATA.credits.filter(c=>c.active).length>0?`<div style="margin-top:10px;">
+            ${DATA.credits.filter(c=>c.active).map(c=>{
+              const pct = Math.min(100,Math.round(c.paid/c.totalAmount*100));
+              return `<div style="margin-bottom:8px;">
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+                  <span>${c.name}</span><span style="color:var(--tx3);">${pct}%</span>
+                </div>
+                <div style="height:4px;background:var(--bg4);border-radius:4px;overflow:hidden;">
+                  <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--acc),var(--cyan));border-radius:4px;"></div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>`:''}
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <div class="clbl"><i class="fas fa-list"></i> Мои кредиты (${DATA.credits.length})</div>
+      </div>
+      <div id="creditsList"></div>
+    </div>`;
+
+  document.getElementById('crAddBtn').addEventListener('click',()=>{
+    const name = document.getElementById('crName').value.trim();
+    const type = document.getElementById('crType').value;
+    const total = parseInt(document.getElementById('crTotal').value)||0;
+    const paid  = parseInt(document.getElementById('crPaid').value)||0;
+    const monthly = parseInt(document.getElementById('crMonthly').value)||0;
+    const rate  = parseFloat(document.getElementById('crRate').value)||0;
+    if(addCredit(name,total,monthly,rate,0,type)){
+      // Set already paid amount
+      const c = DATA.credits[DATA.credits.length-1]; if(c) c.paid=paid;
+      saveData(); renderCreditsTab();
+    }
+  });
+
+  renderCreditsList();
+}
+
+function renderCreditsList() {
+  const list = document.getElementById('creditsList'); if(!list) return;
+  if(!DATA.credits||!DATA.credits.length){
+    list.innerHTML=`<div style="text-align:center;padding:28px;color:var(--tx3);">
+      <i class="fas fa-hand-holding-usd" style="font-size:36px;opacity:.2;display:block;margin-bottom:10px;"></i>
+      Нет кредитов — вы свободны от долгов! 🎉
+    </div>`;
+    return;
+  }
+  const typeIcons = {mortgage:'🏠',auto:'🚗',consumer:'💳',other:'📋'};
+  list.innerHTML = DATA.credits.map(c=>{
+    const pct = Math.min(100,Math.round(c.paid/c.totalAmount*100));
+    const remaining = Math.max(0,c.totalAmount-c.paid);
+    const monthsLeft = c.monthlyPayment>0?Math.ceil(remaining/c.monthlyPayment):0;
+    return `<div style="padding:14px;background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);margin-bottom:9px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
+        <div>
+          <div style="font-size:14px;font-weight:700;">${typeIcons[c.type]||'📋'} ${c.name}</div>
+          <div style="font-size:11px;color:var(--tx3);margin-top:2px;">${c.rate>0?c.rate+'% год. · ':''}${c.active?'Активный':'✅ Закрыт'}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:15px;font-weight:800;color:var(--red);">${fmtAmt(remaining)}</div>
+          <div style="font-size:10px;color:var(--tx3);">осталось долга</div>
+        </div>
+      </div>
+      <div style="height:5px;background:var(--bg4);border-radius:4px;margin-bottom:10px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--green),var(--cyan));border-radius:4px;transition:width .5s;"></div>
+      </div>
+      <div style="display:flex;gap:10px;font-size:11px;margin-bottom:10px;flex-wrap:wrap;">
+        <span style="color:var(--tx3);">Оплачено: <strong style="color:var(--green);">${fmtAmt(c.paid)}</strong></span>
+        <span style="color:var(--tx3);">Всего: <strong>${fmtAmt(c.totalAmount)}</strong></span>
+        <span style="color:var(--tx3);">Платёж: <strong style="color:var(--red);">${fmtAmt(c.monthlyPayment)}/мес</strong></span>
+        ${monthsLeft>0?`<span style="color:var(--tx3);">~${monthsLeft} мес. до закрытия</span>`:''}
+      </div>
+      <div style="display:flex;gap:7px;">
+        ${c.active?`<button class="btn btn-success btn-sm" onclick="makePayment(${c.id})">
+          <i class="fas fa-coins"></i> Внести платёж ${fmtAmt(c.monthlyPayment)}
+        </button>`:'<span style="color:var(--green);font-size:12px;font-weight:700;">✅ Полностью выплачен!</span>'}
+        <button class="btn btn-outline btn-sm" onclick="showEditCreditModal(${c.id})">
+          <i class="fas fa-pen"></i>
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCredit(${c.id})">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showEditCreditModal(id) {
+  const c = (DATA.credits||[]).find(x=>x.id===id); if(!c) return;
+  document.querySelector('.edit-cr-modal')?.remove();
+  const m = document.createElement('div'); m.className='modal-ov edit-cr-modal';
+  m.innerHTML=`<div class="modal-box" style="max-width:360px;">
+    <div class="modal-hdr">
+      <h3><i class="fas fa-pen"></i> Изменить кредит</h3>
+      <button class="modal-close" onclick="this.closest('.edit-cr-modal').remove()">✕</button>
+    </div>
+    <div class="fgrp"><label>Название</label><input class="finput wf" id="ecName" value="${c.name}"/></div>
+    <div class="fgrp"><label>Общая сумма (₸)</label><input class="finput wf" type="number" id="ecTotal" value="${c.totalAmount}"/></div>
+    <div class="fgrp"><label>Уже оплачено (₸)</label><input class="finput wf" type="number" id="ecPaid" value="${c.paid}"/></div>
+    <div class="fgrp"><label>Платёж в месяц (₸)</label><input class="finput wf" type="number" id="ecMonthly" value="${c.monthlyPayment}"/></div>
+    <div class="fgrp"><label>Ставка % год.</label><input class="finput wf" type="number" id="ecRate" value="${c.rate}" step="0.1"/></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" style="flex:1;justify-content:center;" id="ecSave"><i class="fas fa-check"></i> Сохранить</button>
+      <button class="btn btn-ghost" style="flex:1;justify-content:center;" onclick="this.closest('.edit-cr-modal').remove()">Отмена</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click',e=>{if(e.target===m)m.remove();});
+  document.getElementById('ecSave').addEventListener('click',()=>{
+    c.name = document.getElementById('ecName').value.trim()||c.name;
+    c.totalAmount = parseInt(document.getElementById('ecTotal').value)||c.totalAmount;
+    c.paid = parseInt(document.getElementById('ecPaid').value)||0;
+    c.monthlyPayment = parseInt(document.getElementById('ecMonthly').value)||c.monthlyPayment;
+    c.rate = parseFloat(document.getElementById('ecRate').value)||c.rate;
+    c.active = c.paid < c.totalAmount;
+    saveData(); m.remove(); renderCreditsTab();
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// PATCH renderTxTab to init quick buttons
+// ══════════════════════════════════════════════════════
+const _origRenderTxTab = renderTxTab;
+
+
+// ── BOOT ───────────────────────────────
+initAuth();>
     </div>
     <div class="fgrp"><label>Категория</label>
       <select class="finput wf" id="etCat">
