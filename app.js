@@ -2494,6 +2494,7 @@ function renderImportTab() {
       </div>`;
     }
   }
+} // end renderImportTab
 
 // ══════════════════════════════════════════════════════
 // LOCAL PDF BANK STATEMENT PARSER — no API needed
