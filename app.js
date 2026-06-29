@@ -889,353 +889,215 @@ function activatePremium() {
   showPaywall();
 }
 
-function showPaywall(source='') {
-  document.querySelectorAll('.paywall-modal').forEach(m=>m.remove());
-  const days = trialDaysLeft();
-  const isActive = isTrialActive();
-  const modal = document.createElement('div');
+function showPaywall(source) {
+  document.querySelectorAll('.paywall-modal').forEach(function(m){ m.remove(); });
+  var days = trialDaysLeft();
+  var isActive = isTrialActive();
+  var modal = document.createElement('div');
   modal.className = 'modal-ov paywall-modal';
-  modal.innerHTML = `<div class="modal-box" style="max-width:460px;">
-    <div class="modal-hdr">
-      <h3 style="font-family:'Space Grotesk',sans-serif;">
-        ${isActive ? '🎁 Бесплатный период' : '⭐ My Way Premium'}
-      </h3>
-      <button class="modal-close" onclick="this.closest('.modal-ov').remove()">✕</button>
-    </div>
 
-    ${isActive ? `
-    <div style="text-align:center;padding:10px 0 16px;">
-      <div style="font-size:48px;margin-bottom:8px;">🎁</div>
-      <div style="font-size:28px;font-weight:900;color:var(--green);">${days}</div>
-      <div style="font-size:13px;color:var(--tx3);">дней бесплатного доступа</div>
-    </div>
-    ` : `
-    <div style="text-align:center;padding:6px 0 14px;">
-      <div style="font-size:13px;color:var(--tx2);">Бесплатный период истёк. Выберите план:</div>
-    </div>
-    `}
+  // Build HTML without nested template literals
+  var trialBanner = isActive
+    ? '<div style="text-align:center;padding:8px 0 14px;"><div style="font-size:44px;margin-bottom:4px;">🎁</div><div style="font-size:32px;font-weight:900;color:var(--green);">' + days + '</div><div style="font-size:12px;color:var(--tx3);">дней бесплатного доступа осталось</div></div>'
+    : '<div style="text-align:center;padding:6px 0 12px;color:var(--tx2);font-size:13px;">Бесплатный период истёк. Выберите план:</div>';
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
-      <!-- MONTHLY -->
-      <div class="plan-card" onclick="selectPlan('monthly',this)" style="border:2px solid var(--brd2);border-radius:var(--r);padding:16px;cursor:pointer;transition:all .2s;text-align:center;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin-bottom:6px;">Месяц</div>
-        <div style="font-size:28px;font-weight:900;color:var(--tx);">3 500</div>
-        <div style="font-size:12px;color:var(--tx3);">₸ / месяц</div>
-      </div>
-      <!-- YEARLY -->
-      <div class="plan-card" onclick="selectPlan('yearly',this)" style="border:2px solid var(--acc);border-radius:var(--r);padding:16px;cursor:pointer;transition:all .2s;text-align:center;background:rgba(124,58,237,.06);position:relative;">
-        <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--acc);color:#fff;font-size:10px;font-weight:700;padding:2px 10px;border-radius:20px;white-space:nowrap;">ВЫГОДА 17%</div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--acc2);margin-bottom:6px;">Год</div>
-        <div style="font-size:28px;font-weight:900;color:var(--tx);">35 000</div>
-        <div style="font-size:12px;color:var(--tx3);">₸ / год</div>
-      </div>
-    </div>
+  modal.innerHTML =
+    '<div class="modal-box" style="max-width:460px;">' +
+      '<div class="modal-hdr">' +
+        '<h3 style="font-family:Space Grotesk,sans-serif;font-size:16px;">' +
+          (isActive ? '🎁 Бесплатный период' : '⭐ My Way Premium') +
+        '</h3>' +
+        '<button class="modal-close" id="pw-close-btn">✕</button>' +
+      '</div>' +
+      trialBanner +
 
-    <div style="padding:12px;background:var(--bg3);border-radius:var(--r);margin-bottom:14px;font-size:12px;color:var(--tx2);">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-        <div>✅ Все транзакции</div><div>✅ ИИ-советник</div>
-        <div>✅ Карты и депозиты</div><div>✅ Импорт PDF</div>
-        <div>✅ Расширенная статистика</div><div>✅ Кредиты</div>
-        <div>✅ Советы мудрецов</div><div>✅ Игра и квесты</div>
-      </div>
-    </div>
+      // Plan cards
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">' +
+        '<div id="plan-monthly" onclick="selectPlan(\'monthly\')" style="border:2px solid var(--brd2);border-radius:var(--r);padding:16px;cursor:pointer;transition:all .2s;text-align:center;">' +
+          '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin-bottom:6px;">Месяц</div>' +
+          '<div style="font-size:28px;font-weight:900;color:var(--tx);">3 500</div>' +
+          '<div style="font-size:12px;color:var(--tx3);">₸ / месяц</div>' +
+        '</div>' +
+        '<div id="plan-yearly" onclick="selectPlan(\'yearly\')" style="border:2px solid var(--acc);border-radius:var(--r);padding:16px;cursor:pointer;transition:all .2s;text-align:center;background:rgba(124,58,237,.07);position:relative;">' +
+          '<div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--acc);color:#fff;font-size:9px;font-weight:800;padding:2px 10px;border-radius:20px;white-space:nowrap;">ВЫГОДА 17%</div>' +
+          '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--acc2);margin-bottom:6px;">Год</div>' +
+          '<div style="font-size:28px;font-weight:900;color:var(--tx);">35 000</div>' +
+          '<div style="font-size:12px;color:var(--tx3);">₸ / год</div>' +
+        '</div>' +
+      '</div>' +
 
-    <!-- CARD FORM -->
-    <div id="paywallCardSection">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin-bottom:10px;">ОПЛАТА КАРТОЙ</div>
-      <div style="position:relative;margin-bottom:9px;">
-        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--tx3);">💳</span>
-        <input type="text" id="payCardNum" placeholder="0000 0000 0000 0000" maxlength="19"
-          style="width:100%;padding:10px 10px 10px 30px;background:var(--bg3);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;box-sizing:border-box;"/>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px;">
-        <input type="text" id="payExpiry" placeholder="MM / YY" maxlength="7"
-          style="padding:10px;background:var(--bg3);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;"/>
-        <input type="text" id="payCVV" placeholder="CVV" maxlength="3"
-          style="padding:10px;background:var(--bg3);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;"/>
-      </div>
-      <input type="text" id="payHolder" placeholder="IVAN IVANOV"
-        style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;text-transform:uppercase;box-sizing:border-box;margin-bottom:12px;"/>
-    </div>
+      // Features
+      '<div style="padding:12px;background:var(--bg3);border-radius:var(--r);margin-bottom:14px;font-size:12px;color:var(--tx2);">' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">' +
+          '<div>✅ Все транзакции</div><div>✅ ИИ-советник</div>' +
+          '<div>✅ Карты и депозиты</div><div>✅ Импорт PDF</div>' +
+          '<div>✅ Расширенная статистика</div><div>✅ Кредиты</div>' +
+          '<div>✅ Советы мудрецов</div><div>✅ Игра и квесты</div>' +
+        '</div>' +
+      '</div>' +
 
-    <button class="btn btn-primary wf" id="payBtn" style="justify-content:center;font-size:14px;padding:13px;" onclick="handlePaywallPay(this, '${isActive?'monthly':'monthly'}')">
-      <i class="fas fa-lock"></i> Оформить — 3 500 ₸/мес
-    </button>
-    ${isActive ? `<div style="text-align:center;margin-top:8px;font-size:11px;color:var(--tx3);">У вас есть ${days} дней бесплатно — оформить заранее</div>` : ''}
-  </div>`;
+      // Card form
+      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin-bottom:9px;">ОПЛАТА КАРТОЙ</div>' +
+      '<div style="position:relative;margin-bottom:8px;">' +
+        '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--tx3);">💳</span>' +
+        '<input type="text" id="payCardNum" placeholder="0000 0000 0000 0000" maxlength="19" style="width:100%;padding:10px 10px 10px 30px;background:var(--bg3);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;box-sizing:border-box;"/>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">' +
+        '<input type="text" id="payExpiry" placeholder="MM / YY" maxlength="7" style="padding:10px;background:var(--bg3);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;"/>' +
+        '<input type="text" id="payCVV" placeholder="CVV" maxlength="3" style="padding:10px;background:var(--bg3);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;"/>' +
+      '</div>' +
+      '<input type="text" id="payHolder" placeholder="IVAN IVANOV" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;text-transform:uppercase;box-sizing:border-box;margin-bottom:12px;"/>' +
+      '<button class="btn btn-primary wf" id="payBtn" style="justify-content:center;font-size:14px;padding:13px;">' +
+        '<i class="fas fa-lock" style="font-size:11px;"></i> <span id="payBtnTxt">Оформить — 3 500 ₸/мес</span>' +
+      '</button>' +
+      (isActive ? '<div style="text-align:center;margin-top:7px;font-size:10px;color:var(--tx3);">У вас есть ' + days + ' дней бесплатно — можно оформить заранее</div>' : '') +
+      '<div style="text-align:center;margin-top:6px;font-size:10px;color:var(--tx3);">🔒 Безопасно · Отмена в любое время</div>' +
+    '</div>';
 
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+  document.getElementById('pw-close-btn').addEventListener('click', function(){ modal.remove(); });
 
-  // Format card number
-  const cn = document.getElementById('payCardNum');
+  // Default: yearly selected if trial expired
+  window._pwPlan = isActive ? 'monthly' : 'yearly';
+  selectPlan(window._pwPlan);
+
+  // Card formatting
+  var cn = document.getElementById('payCardNum');
   if(cn) cn.addEventListener('input', function(){ this.value=this.value.replace(/\D/g,'').replace(/(.{4})/g,'$1 ').trim().slice(0,19); });
-  const ex = document.getElementById('payExpiry');
-  if(ex) ex.addEventListener('input', function(){ let v=this.value.replace(/\D/g,''); if(v.length>=3)v=v.slice(0,2)+' / '+v.slice(2,4); this.value=v; });
+  var ex = document.getElementById('payExpiry');
+  if(ex) ex.addEventListener('input', function(){ var v=this.value.replace(/\D/g,''); if(v.length>=3)v=v.slice(0,2)+' / '+v.slice(2,4); this.value=v; });
+  var h = document.getElementById('payHolder');
+  if(h) h.addEventListener('input', function(){ this.value=this.value.toUpperCase(); });
 
-  // Default select yearly if trial expired
-  if(!isActive) {
-    const yearly = modal.querySelectorAll('.plan-card')[1];
-    if(yearly) selectPlan('yearly', yearly);
+  // Pay button
+  var payBtn = document.getElementById('payBtn');
+  if(payBtn) payBtn.addEventListener('click', function(){ handlePaywallPay(this); });
+}
+
+function selectPlan(plan) {
+  window._pwPlan = plan;
+  var monthly = document.getElementById('plan-monthly');
+  var yearly  = document.getElementById('plan-yearly');
+  if(!monthly || !yearly) return;
+
+  if(plan === 'monthly') {
+    monthly.style.border = '2px solid var(--acc)';
+    monthly.style.background = 'rgba(124,58,237,.07)';
+    yearly.style.border = '2px solid var(--brd2)';
+    yearly.style.background = 'transparent';
+    var txt = document.getElementById('payBtnTxt');
+    if(txt) txt.textContent = 'Оформить — 3 500 ₸/мес';
+  } else {
+    yearly.style.border = '2px solid var(--acc)';
+    yearly.style.background = 'rgba(124,58,237,.07)';
+    monthly.style.border = '2px solid var(--brd2)';
+    monthly.style.background = 'transparent';
+    var txt = document.getElementById('payBtnTxt');
+    if(txt) txt.textContent = 'Оформить — 35 000 ₸/год';
   }
 }
 
-window._selectedPlan = 'monthly';
-function selectPlan(plan, el) {
-  window._selectedPlan = plan;
-  document.querySelectorAll('.plan-card').forEach(c => {
-    c.style.borderColor = 'var(--brd2)';
-    c.style.background = '';
-  });
-  el.style.borderColor = 'var(--acc)';
-  el.style.background = 'rgba(124,58,237,.08)';
-  const btn = document.getElementById('payBtn');
-  if(btn) {
-    const amt = plan === 'yearly' ? '35 000 ₸/год' : '3 500 ₸/мес';
-    btn.innerHTML = `<i class="fas fa-lock"></i> Оформить — ${amt}`;
-    btn.onclick = () => handlePaywallPay(btn, plan);
-  }
-}
+function handlePaywallPay(btn) {
+  var plan = window._pwPlan || 'monthly';
 
-function handlePaywallPay(btn, plan) {
-  const num = (document.getElementById('payCardNum')?.value||'').replace(/\s/g,'');
-  const expiry = document.getElementById('payExpiry')?.value||'';
-  const cvv = document.getElementById('payCVV')?.value||'';
-  const holder = document.getElementById('payHolder')?.value||'';
-  if(num.length < 16){ alert('Введите корректный номер карты (16 цифр)'); return; }
-  if(!expiry || expiry.replace(/[\s\/]/g,'').length < 4){ alert('Введите срок действия карты'); return; }
+  // Validate card
+  var num    = (document.getElementById('payCardNum')?.value||'').replace(/\s/g,'');
+  var expiry = (document.getElementById('payExpiry')?.value||'').replace(/\s/g,'');
+  var cvv    = (document.getElementById('payCVV')?.value||'');
+  var holder = (document.getElementById('payHolder')?.value||'').trim();
+
+  if(num.length < 16){ alert('Введите 16 цифр номера карты'); return; }
+  if(expiry.replace('/','').length < 4){ alert('Введите срок действия карты'); return; }
   if(cvv.length < 3){ alert('Введите CVV (3 цифры)'); return; }
-  if(!holder.trim()){ alert('Введите имя держателя карты'); return; }
+  if(!holder){ alert('Введите имя держателя карты'); return; }
 
-  btn.disabled = true;
-  btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" style="animation:spin .7s linear infinite;fill:none;stroke:#fff;stroke-width:2.5;"><circle cx="12" cy="12" r="10" stroke-opacity=".2"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> Обработка...</span>';
-
-  setTimeout(() => {
-    DATA.savedCard = { last4: num.slice(-4), expiry: expiry.trim(), holder: holder.trim().toUpperCase() };
-    DATA.premium = true;
-    DATA.premiumSince = Date.now();
-    DATA.premiumPlan = plan;
-    saveData();
-
-    const modal = btn.closest('.modal-ov');
-    if(modal) modal.remove();
-
-    // Show success
-    const success = document.createElement('div');
-    success.className = 'modal-ov';
-    success.innerHTML = `<div class="modal-box" style="max-width:360px;text-align:center;">
-      <div style="font-size:56px;margin-bottom:12px;">🎉</div>
-      <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:800;margin-bottom:8px;">Оплата прошла!</div>
-      <div style="font-size:13px;color:var(--tx2);margin-bottom:6px;">Карта **** ${num.slice(-4)}</div>
-      <div style="font-size:13px;color:var(--tx2);margin-bottom:16px;">My Way Premium — ${plan==='yearly'?'год (35 000 ₸)':'месяц (3 500 ₸)'}</div>
-      <button class="btn btn-primary wf" style="justify-content:center;" onclick="this.closest('.modal-ov').remove()">
-        <i class="fas fa-rocket"></i> Отлично!
-      </button>
-    </div>`;
-    document.body.appendChild(success);
-    success.addEventListener('click', e => { if(e.target===success) success.remove(); });
-    renderHeader();
-  }, 1800);
-}
-
-
-function showCardForm() {
-  const sec=document.getElementById('paymentSection'); if(!sec) return;
-  sec.innerHTML=`<div id="cardForm" style="background:var(--bg3);border:1px solid var(--brd2);border-radius:var(--r);padding:14px;margin-bottom:12px;">
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin-bottom:10px;">НОВАЯ КАРТА</div>
-    <div style="position:relative;margin-bottom:9px;"><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--tx3);">💳</span><input type="text" id="payCardNum" placeholder="0000 0000 0000 0000" maxlength="19" style="width:100%;padding:10px 10px 10px 32px;background:var(--bg4);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;"/></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px;">
-      <input type="text" id="payExpiry" placeholder="MM / YY" maxlength="7" style="padding:10px;background:var(--bg4);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;"/>
-      <input type="text" id="payCVV" placeholder="CVV" maxlength="3" style="padding:10px;background:var(--bg4);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;"/>
-    </div>
-    <input type="text" id="payHolder" placeholder="IVAN IVANOV" style="width:100%;padding:10px;background:var(--bg4);border:1px solid var(--brd2);border-radius:8px;font-family:Inter,sans-serif;font-size:13px;color:var(--tx);outline:none;text-transform:uppercase;"/>
-  </div>`;
-  const cn=document.getElementById('payCardNum');
-  if(cn) cn.addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').replace(/(.{4})/g,'$1 ').trim().slice(0,19);});
-  const ex=document.getElementById('payExpiry');
-  if(ex) ex.addEventListener('input',function(){let v=this.value.replace(/\D/g,'');if(v.length>=3)v=v.slice(0,2)+' / '+v.slice(2,4);this.value=v;});
-}
-
-function processPayment(plan, btn, modal) {
-  // Validate card fields if no saved card
-  const hasSaved = DATA.savedCard?.last4;
-  if (!hasSaved) {
-    const num = (document.getElementById('payCardNum')?.value||'').replace(/\s/g,'');
-    const expiry = document.getElementById('payExpiry')?.value||'';
-    const cvv = document.getElementById('payCVV')?.value||'';
-    const holder = document.getElementById('payHolder')?.value||'';
-    if (num.length < 16) { alert('Введите корректный номер карты (16 цифр)'); return; }
-    if (!expiry || expiry.replace(/\s/g,'').length < 4) { alert('Введите срок действия'); return; }
-    if (cvv.length < 3) { alert('Введите CVV'); return; }
-    if (!holder.trim()) { alert('Введите имя держателя'); return; }
-    DATA.savedCard = {
-      last4: num.slice(-4),
-      expiry: expiry.replace(/\s/g,''),
-      holder: holder.trim().toUpperCase(),
-      type: 'CARD'
-    };
-  }
+  DATA.savedCard = { last4: num.slice(-4), expiry: expiry, holder: holder, type: 'CARD' };
 
   // Animate button
   btn.disabled = true;
-  btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;">' +
-    '<svg width="16" height="16" viewBox="0 0 24 24" style="animation:spin .7s linear infinite;fill:none;stroke:#fff;stroke-width:2.5;">' +
-    '<circle cx="12" cy="12" r="10" stroke-opacity=".2"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>' +
-    ' Проверка данных...</span>';
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" style="animation:spin .7s linear infinite;fill:none;stroke:#fff;stroke-width:2.5;"><circle cx="12" cy="12" r="10" stroke-opacity=".2"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> Обработка...';
 
-  setTimeout(() => {
-    modal.remove();
+  setTimeout(function(){
+    document.querySelectorAll('.paywall-modal').forEach(function(m){ m.remove(); });
     showPaymentComingSoon(plan);
   }, 1800);
 }
 
 function showPaymentComingSoon(plan) {
-  document.querySelectorAll('.paywall-modal,.payment-soon-modal').forEach(m => m.remove());
-  const modal = document.createElement('div');
-  modal.className = 'modal-ov payment-soon-modal';
+  var amount = plan === 'yearly' ? '35 000 ₸' : '3 500 ₸';
+  var card = DATA.savedCard;
+  var waitlist = JSON.parse(localStorage.getItem('mw_waitlist')||'[]');
+  var alreadyIn = CUR_USER && waitlist.includes(CUR_USER.email);
 
-  const amount = plan === 'yearly' ? '35 000 ₸' : '3 500 ₸';
-  const period = plan === 'yearly' ? 'год' : 'месяц';
-  const card = DATA.savedCard;
-
-  // Collect waitlist emails in localStorage
-  const waitlist = JSON.parse(localStorage.getItem('mw_waitlist') || '[]');
-  const alreadyIn = waitlist.includes(CUR_USER.email);
-
-  modal.innerHTML = `
-  <div class="modal-box" style="max-width:420px;padding:0;overflow:hidden;">
-
-    <!-- Top gradient header -->
-    <div style="background:linear-gradient(135deg,#7c3aed,#06b6d4);padding:28px 24px 22px;text-align:center;position:relative;">
-      <button onclick="this.closest('.payment-soon-modal').remove()"
-        style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,.15);border:none;width:28px;height:28px;border-radius:50%;color:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">✕</button>
-      <div style="font-size:48px;margin-bottom:8px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1);">🚀</div>
-      <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:800;color:#fff;margin-bottom:4px;">Оплата скоро будет!</div>
-      <div style="font-size:12px;color:rgba(255,255,255,.75);">Мы подключаем платёжную систему</div>
-    </div>
-
-    <div style="padding:22px 22px 24px;">
-
-      <!-- What was selected -->
-      <div style="background:var(--bg3);border:1px solid var(--brd2);border-radius:var(--r);padding:14px;margin-bottom:18px;">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);margin-bottom:10px;">ВЫ ВЫБРАЛИ</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <div>
-            <div style="font-size:15px;font-weight:800;">${plan === 'yearly' ? 'Годовой тариф' : 'Месячный тариф'}</div>
-            <div style="font-size:11px;color:var(--tx3);">${plan === 'yearly' ? 'Экономия 17% vs месячного' : 'Автопродление каждый месяц'}</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:20px;font-weight:800;color:var(--acc2);">${amount}</div>
-            <div style="font-size:10px;color:var(--tx3);">/ ${period}</div>
-          </div>
-        </div>
-        ${card ? `<div style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--bg4);border-radius:8px;">
-          <div style="width:32px;height:20px;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;color:#fff;">CARD</div>
-          <div>
-            <div style="font-size:12px;font-weight:600;">•••• •••• •••• ${card.last4}</div>
-            <div style="font-size:10px;color:var(--tx3);">${card.holder} · ${card.expiry}</div>
-          </div>
-          <span style="margin-left:auto;font-size:10px;color:var(--tx3);background:var(--bg3);padding:2px 7px;border-radius:20px;">Сохранена</span>
-        </div>` : ''}
-      </div>
-
-      <!-- Coming soon explanation -->
-      <div style="background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.2);border-radius:var(--r);padding:14px;margin-bottom:16px;">
-        <div style="font-size:13px;font-weight:700;margin-bottom:8px;">⚙️ Что происходит?</div>
-        <div style="font-size:12px;color:var(--tx2);line-height:1.65;">
-          Мы сейчас подключаем <strong>Kaspi Pay</strong> и другие платёжные системы Казахстана.
-          Как только оплата будет готова — вы получите <strong>уведомление на email</strong>
-          и <strong>первый месяц бесплатно</strong> как ранний пользователь. 🎁
-        </div>
-      </div>
-
-      <!-- Waitlist signup -->
-      <div style="margin-bottom:16px;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--tx3);margin-bottom:8px;">
-          <i class="fas fa-bell"></i> УВЕДОМИТЬ МЕНЯ
-        </div>
-        ${alreadyIn ? `
-        <div style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:var(--gd);border:1px solid rgba(16,185,129,.25);border-radius:var(--r);">
-          <span style="font-size:18px;">✅</span>
-          <div>
-            <div style="font-size:12px;font-weight:700;color:var(--green);">Вы в списке ожидания!</div>
-            <div style="font-size:11px;color:var(--tx3);">${CUR_USER.email}</div>
-          </div>
-        </div>` : `
-        <div style="display:flex;gap:7px;">
-          <input id="waitlistEmail" type="email" value="${CUR_USER.email}"
-            style="flex:1;padding:10px 12px;background:var(--bg3);border:1px solid var(--brd2);border-radius:var(--rsm);font-family:Inter,sans-serif;font-size:12px;color:var(--tx);outline:none;"
-            placeholder="Ваш email"/>
-          <button id="waitlistBtn" class="btn btn-primary" style="white-space:nowrap;">
-            <i class="fas fa-bell"></i> Оповестить
-          </button>
-        </div>
-        <div style="font-size:10px;color:var(--tx3);margin-top:5px;">Получите +1 месяц бесплатно при подключении оплаты</div>
-        `}
-      </div>
-
-      <!-- What's already free -->
-      <div style="background:var(--bg3);border-radius:var(--r);padding:12px;margin-bottom:16px;">
-        <div style="font-size:10px;font-weight:700;color:var(--tx3);margin-bottom:8px;">ПОКА ВСЁ БЕСПЛАТНО — 30 ДНЕЙ</div>
-        ${[
-          ['✅','Все транзакции и категории'],
-          ['✅','Банковские карты и депозиты'],
-          ['✅','Финансовые цели'],
-          ['✅','ИИ-советник'],
-          ['✅','Импорт выписок'],
-          ['✅','Статистика и аналитика'],
-        ].map(([ic,tx]) => `<div style="font-size:11px;margin-bottom:4px;">${ic} ${tx}</div>`).join('')}
-      </div>
-
-      <button class="btn btn-success wf" onclick="this.closest('.payment-soon-modal').remove()"
-        style="justify-content:center;font-size:14px;padding:13px;">
-        <i class="fas fa-rocket"></i> Понятно, продолжить бесплатно!
-      </button>
-
-      <div style="text-align:center;margin-top:10px;font-size:10px;color:var(--tx3);">
-        🔒 Данные вашей карты не хранятся на сервере<br>
-        Реальное списание будет только после подключения платёжной системы
-      </div>
-    </div>
-  </div>`;
+  var modal = document.createElement('div');
+  modal.className = 'modal-ov';
+  modal.innerHTML =
+    '<div class="modal-box" style="max-width:420px;padding:0;overflow:hidden;border-radius:18px;">' +
+      '<div style="background:linear-gradient(135deg,#7c3aed,#06b6d4);padding:24px 22px 20px;text-align:center;position:relative;">' +
+        '<button id="payclose2" style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,.18);border:none;width:28px;height:28px;border-radius:50%;color:#fff;cursor:pointer;font-size:13px;">✕</button>' +
+        '<div style="font-size:44px;margin-bottom:8px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1);">🚀</div>' +
+        '<div style="font-family:Space Grotesk,sans-serif;font-size:18px;font-weight:800;color:#fff;margin-bottom:4px;">Оплата скоро появится!</div>' +
+        '<div style="font-size:12px;color:rgba(255,255,255,.75);">Подключаем Kaspi Pay и другие платёжные системы</div>' +
+      '</div>' +
+      '<div style="padding:20px 22px 22px;">' +
+        '<div style="background:var(--bg3);border:1px solid var(--brd2);border-radius:var(--r);padding:13px;margin-bottom:14px;">' +
+          '<div style="font-size:10px;color:var(--tx3);margin-bottom:8px;font-weight:700;text-transform:uppercase;">Ваш выбор</div>' +
+          '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;">' +
+            '<span style="color:var(--tx3);">Тариф</span>' +
+            '<strong>' + (plan==='yearly'?'Годовой':'Месячный') + '</strong>' +
+          '</div>' +
+          '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;">' +
+            '<span style="color:var(--tx3);">Стоимость</span>' +
+            '<strong style="color:var(--acc2);">' + amount + '</strong>' +
+          '</div>' +
+          (card ? '<div style="display:flex;justify-content:space-between;font-size:13px;">' +
+            '<span style="color:var(--tx3);">Карта</span>' +
+            '<strong>•••• ' + card.last4 + '</strong>' +
+          '</div>' : '') +
+        '</div>' +
+        '<div style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:var(--r);padding:13px;margin-bottom:14px;font-size:12px;color:var(--tx2);line-height:1.65;">' +
+          'Как только оплата подключится — вы получите уведомление на email и <strong>+1 месяц бесплатно</strong> как ранний пользователь. 🎁' +
+        '</div>' +
+        (alreadyIn
+          ? '<div style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:var(--gd);border:1px solid rgba(16,185,129,.25);border-radius:var(--r);margin-bottom:12px;"><span style="font-size:18px;">✅</span><div><div style="font-size:12px;font-weight:700;color:var(--green);">Вы уже в списке ожидания</div></div></div>'
+          : '<div style="display:flex;gap:7px;margin-bottom:12px;">' +
+              '<input id="wlEmail" type="email" value="' + (CUR_USER?CUR_USER.email:'') + '" style="flex:1;padding:9px 11px;background:var(--bg3);border:1px solid var(--brd2);border-radius:var(--rsm);font-family:Inter,sans-serif;font-size:12px;color:var(--tx);outline:none;"/>' +
+              '<button id="wlBtn" class="btn btn-primary" style="white-space:nowrap;"><i class="fas fa-bell"></i> Уведомить</button>' +
+            '</div>'
+        ) +
+        '<button class="btn btn-success wf" id="paysoon-close" style="justify-content:center;font-size:13px;padding:12px;">' +
+          '<i class="fas fa-rocket"></i> Продолжить бесплатно!' +
+        '</button>' +
+        '<div style="text-align:center;margin-top:8px;font-size:10px;color:var(--tx3);">Реальное списание только после подключения платёжной системы</div>' +
+      '</div>' +
+    '</div>';
 
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+  document.getElementById('payclose2').addEventListener('click', function(){ modal.remove(); });
+  document.getElementById('paysoon-close').addEventListener('click', function(){ modal.remove(); });
 
-  // Waitlist button
-  const wBtn = document.getElementById('waitlistBtn');
-  const wInp = document.getElementById('waitlistEmail');
-  if (wBtn && wInp) {
-    wBtn.addEventListener('click', () => {
-      const email = wInp.value.trim().toLowerCase();
-      if (!email.includes('@')) { alert('Введите корректный email'); return; }
-      const list = JSON.parse(localStorage.getItem('mw_waitlist') || '[]');
-      if (!list.includes(email)) { list.push(email); localStorage.setItem('mw_waitlist', JSON.stringify(list)); }
-      // Show success state
-      wBtn.closest('div').parentElement.innerHTML = `
-        <div style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:var(--gd);border:1px solid rgba(16,185,129,.25);border-radius:var(--r);">
-          <span style="font-size:18px;">✅</span>
-          <div>
-            <div style="font-size:12px;font-weight:700;color:var(--green);">Вы в списке ожидания!</div>
-            <div style="font-size:11px;color:var(--tx3);">${email}</div>
-          </div>
-        </div>
-        <div style="font-size:10px;color:var(--tx3);margin-top:5px;">Получите +1 месяц бесплатно при подключении оплаты</div>`;
+  var wlBtn = document.getElementById('wlBtn');
+  var wlEmail = document.getElementById('wlEmail');
+  if(wlBtn && wlEmail) {
+    wlBtn.addEventListener('click', function(){
+      var em = wlEmail.value.trim().toLowerCase();
+      if(!em.includes('@')){ alert('Введите email'); return; }
+      var list = JSON.parse(localStorage.getItem('mw_waitlist')||'[]');
+      if(!list.includes(em)){ list.push(em); localStorage.setItem('mw_waitlist',JSON.stringify(list)); }
+      wlBtn.parentElement.innerHTML = '<div style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:var(--gd);border:1px solid rgba(16,185,129,.25);border-radius:var(--r);"><span style="font-size:18px;">✅</span><div><div style="font-size:12px;font-weight:700;color:var(--green);">Добавлены в список ожидания!</div></div></div>';
     });
   }
 }
 
-function showPaymentSuccess(plan) {
-  // Redirect to coming soon page instead
-  showPaymentComingSoon(plan);
-}
-
 function cancelSubscription() {
-  if(!confirm('Отменить подписку? Доступ сохранится до конца оплаченного периода.')) return;
-  DATA.premium=false; DATA.premiumSince=null; DATA.premiumPlan=null; saveData();
-  document.querySelectorAll('.paywall-modal,.modal-ov').forEach(m=>m.remove());
+  if(!confirm('Отменить подписку? Доступ сохранится до конца периода.')) return;
+  DATA.premium=false; DATA.premiumSince=null; DATA.premiumPlan=null;
+  saveData();
+  document.querySelectorAll('.paywall-modal,.modal-ov').forEach(function(m){ m.remove(); });
   renderHeader();
-  alert('Подписка отменена. Доступ сохраняется до конца периода.');
+  alert('Подписка отменена.');
 }
 
 // ── DASHBOARD ──────────────────────────
@@ -1697,19 +1559,34 @@ async function importPDFForCard(file, cardId) {
     });
 
     const data = await response.json();
-    if (data.error) throw new Error(data.error.message || 'API error');
-    const text = data.content?.[0]?.text || '';
-    const stripped2 = text.replace(/```json|```/gi, '');
-    const allMatches2 = stripped2.match(/\{[\s\S]*\}/);
-    if (!allMatches2) throw new Error('JSON не найден');
-    let parsed;
-    try { parsed = JSON.parse(allMatches2[0]); }
-    catch(e) {
-      const lb = stripped2.lastIndexOf('}'), fb = stripped2.indexOf('{');
-      if (fb === -1 || lb === -1) throw new Error('JSON не найден');
-      parsed = JSON.parse(stripped2.slice(fb, lb + 1));
+    if (data.error) throw new Error(data.error.message || 'Ошибка API: ' + JSON.stringify(data.error));
+    const rawText = data.content?.[0]?.text || '';
+    if (!rawText) throw new Error('Пустой ответ от API');
+
+    // Robust JSON extraction
+    let parsed = null;
+    try {
+      // Try 1: find JSON block in markdown
+      const stripped = rawText.replace(/```json\s*/gi,'').replace(/```\s*/gi,'');
+      // Try to find the outermost { ... }
+      const firstBrace = stripped.indexOf('{');
+      const lastBrace = stripped.lastIndexOf('}');
+      if (firstBrace >= 0 && lastBrace > firstBrace) {
+        parsed = JSON.parse(stripped.slice(firstBrace, lastBrace + 1));
+      }
+    } catch(e1) {
+      try {
+        // Try 2: extract just transactions array
+        const arrMatch = rawText.match(/"transactions"\s*:\s*(\[[\s\S]*?\])/);
+        if (arrMatch) {
+          parsed = { transactions: JSON.parse(arrMatch[1]), analysis: {} };
+        }
+      } catch(e2) {
+        // Try 3: return raw text as error info
+        throw new Error('Не удалось разобрать ответ ИИ. Ответ: ' + rawText.slice(0,200));
+      }
     }
-    if (parsed.error) throw new Error(parsed.error);
+    if (!parsed) throw new Error('JSON не найден в ответе ИИ');
 
     const txs = (parsed.transactions || []).map((tx, i) => ({
       id: DATA.nextId + i,
