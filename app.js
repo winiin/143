@@ -290,22 +290,31 @@ function isPremium() {
   return false;
 }
 
+function getTrialStart() {
+  // Trial clock starts on FIRST real visit to the app
+  // Not at registration — user might register and never visit
+  if (!CUR_USER) return Date.now();
+  const key = 'mw_trial_' + CUR_USER.email;
+  let ts = localStorage.getItem(key);
+  if (!ts) {
+    ts = Date.now().toString();
+    localStorage.setItem(key, ts);
+  }
+  return parseInt(ts);
+}
+
 function isTrialActive() {
-  // Timer counts from REGISTRATION date — real calendar days
-  // Doesn't matter if user logs in or not — days always pass
   if (!DATA) return true;
   if (isPremium()) return true;
-  const start = DATA.trialStart || DATA.joinedAt;
-  if (!start) return true; // No start date = brand new user = give trial
+  const start = getTrialStart();
   const daysPassed = (Date.now() - start) / 86400000;
   return daysPassed < 30;
 }
 
 function trialDaysLeft() {
-  if(!DATA) return 30;
-  const start = DATA.trialStart;
-  if(!start) return 30;
-  return Math.max(0, Math.ceil(30 - (Date.now() - start) / 864e5));
+  const start = getTrialStart();
+  const daysPassed = (Date.now() - start) / 86400000;
+  return Math.max(0, Math.ceil(30 - daysPassed));
 }
 
 // ── DAILY QUESTS POOL ──────────────────
@@ -596,6 +605,18 @@ const CARD_BG={
 
 function cardSpent(id){ return DATA.transactions.filter(t=>t.cardId===id&&t.type==='expense').reduce((s,t)=>s+t.amount,0); }
 function cardTxCount(id){ return DATA.transactions.filter(t=>t.cardId===id).length; }
+// Net balance available on a card (income - expense on that card)
+function cardBalance(id){
+  const inc=DATA.transactions.filter(t=>t.cardId===id&&t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const exp=DATA.transactions.filter(t=>t.cardId===id&&t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  return inc-exp;
+}
+// Keeps card.balance field in sync (used for quick display / future features)
+function updateCardBalance(cardId, amount, type){
+  const c=DATA.cards.find(x=>x.id===cardId); if(!c) return;
+  if(typeof c.balance!=='number') c.balance=0;
+  c.balance += (type==='income'? amount : -amount);
+}
 
 function addCard(num,holder,expiry,bank,type,color) {
   const digits=num.replace(/\D/g,'');
@@ -633,8 +654,139 @@ function contributeGoal(id,amount) {
 function addDeposit(name,amount,rate,months) {
   if(!name||amount<=0||rate<=0||months<=0){alert(t('fillAll'));return;}
   const income=Math.round(amount*(rate/100)*(months/12));
-  DATA.deposits.push({id:Date.now(),name,amount,rate,months,income,createdAt:Date.now()});
+  DATA.deposits.push({
+    id:Date.now(), name, amount,
+    currentAmount: amount, // tracks deposits/withdrawals
+    rate, months, income, createdAt:Date.now(),
+    history:[] // [{type:'deposit'|'withdraw', amount, date, note}]
+  });
   saveData(); renderDepositsTab();
+}
+
+function depositToAccount(depId, amount, note) {
+  const dep = DATA.deposits.find(d=>d.id===depId);
+  if(!dep) return;
+  if(!dep.history) dep.history=[];
+  if(!dep.currentAmount) dep.currentAmount=dep.amount;
+  dep.currentAmount += amount;
+  dep.amount += amount; // update base amount
+  // Recalculate expected income
+  const remaining = dep.months - Math.floor((Date.now()-dep.createdAt)/(30*864e5));
+  dep.income = Math.round(dep.currentAmount * (dep.rate/100) * (Math.max(1,remaining)/12));
+  dep.history.push({type:'deposit', amount, date:Date.now(), note:note||'Пополнение'});
+  saveData(); renderDepositsTab();
+}
+
+function withdrawFromDeposit(depId, amount, note) {
+  const dep = DATA.deposits.find(d=>d.id===depId);
+  if(!dep) return;
+  if(!dep.currentAmount) dep.currentAmount=dep.amount;
+  if(amount > dep.currentAmount){
+    alert('❌ Сумма снятия больше остатка на депозите!'); return;
+  }
+  if(!dep.history) dep.history=[];
+  dep.currentAmount -= amount;
+  dep.amount = dep.currentAmount;
+  const remaining = dep.months - Math.floor((Date.now()-dep.createdAt)/(30*864e5));
+  dep.income = Math.round(dep.currentAmount * (dep.rate/100) * (Math.max(1,remaining)/12));
+  dep.history.push({type:'withdraw', amount, date:Date.now(), note:note||'Снятие'});
+  // Add to transactions as income
+  DATA.transactions.push({
+    id:DATA.nextId++, text:'Снятие с депозита: '+dep.name,
+    amount, type:'income', category:'Другой доход', date:Date.now(), cardId:null
+  });
+  saveData(); renderDepositsTab(); renderHeader();
+}
+
+// ── TRANSFERS BETWEEN ACCOUNTS/CARDS ───
+// fromId/toId: card id, or null/'cash' for "cash / no card"
+function transferBetweenAccounts(fromId, toId, amount, note) {
+  amount = Math.round(parseFloat(amount));
+  if(!amount || amount<=0){ alert('Введите сумму больше 0'); return false; }
+  if((fromId||'cash')===(toId||'cash')){ alert('Выберите разные счета для перевода'); return false; }
+
+  const fromCard = fromId ? DATA.cards.find(c=>c.id===fromId) : null;
+  const toCard   = toId   ? DATA.cards.find(c=>c.id===toId)   : null;
+
+  // Check available balance on source (card balance or overall cash balance)
+  let available;
+  if(fromCard){ available = cardBalance(fromCard.id); }
+  else {
+    const inc=DATA.transactions.filter(t=>!t.cardId&&t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const exp=DATA.transactions.filter(t=>!t.cardId&&t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    available = inc-exp;
+  }
+  if(amount>available){
+    if(!confirm(`На счёте-источнике недостаточно средств по расчётам (доступно ≈ ${fmtAmt(available)}). Всё равно перевести?`)) return false;
+  }
+
+  const fromLabel = fromCard ? `${fromCard.bank} **** ${fromCard.number}` : 'Наличные';
+  const toLabel   = toCard   ? `${toCard.bank} **** ${toCard.number}`     : 'Наличные';
+  const noteTxt   = note ? ` (${note})` : '';
+  const ts = Date.now();
+
+  DATA.transactions.push({
+    id:DATA.nextId++, text:`Перевод на «${toLabel}»${noteTxt}`,
+    amount, type:'expense', category:'Перевод', cardId: fromCard?fromCard.id:null, date:ts
+  });
+  DATA.transactions.push({
+    id:DATA.nextId++, text:`Перевод со счёта «${fromLabel}»${noteTxt}`,
+    amount, type:'income', category:'Перевод', cardId: toCard?toCard.id:null, date:ts+1
+  });
+
+  if(fromCard) updateCardBalance(fromCard.id, amount, 'expense');
+  if(toCard) updateCardBalance(toCard.id, amount, 'income');
+
+  checkAch(); saveData(); renderHeader();
+  return true;
+}
+
+function showTransferModal() {
+  document.querySelector('.transfer-modal')?.remove();
+  const m = document.createElement('div');
+  m.className = 'modal-ov transfer-modal';
+  const cardOpts = (selectedId)=> `<option value="cash" ${!selectedId?'selected':''}>💵 Наличные / без карты</option>` +
+    DATA.cards.map(c=>`<option value="${c.id}" ${selectedId===c.id?'selected':''}>💳 ${c.bank} **** ${c.number}</option>`).join('');
+
+  m.innerHTML = `<div class="modal-box" style="max-width:400px;">
+    <div class="modal-hdr">
+      <h3><i class="fas fa-exchange-alt"></i> Перевод между счетами</h3>
+      <button class="modal-close" onclick="this.closest('.transfer-modal').remove()">✕</button>
+    </div>
+    <div class="fgrp"><label>Откуда</label>
+      <select class="fsel wf" id="trFrom">${cardOpts(null)}</select>
+    </div>
+    <div style="text-align:center;margin:2px 0;color:var(--acc2);"><i class="fas fa-arrow-down"></i></div>
+    <div class="fgrp"><label>Куда</label>
+      <select class="fsel wf" id="trTo">${cardOpts(DATA.cards[0]?DATA.cards[0].id:null)}</select>
+    </div>
+    <div class="fgrp"><label>Сумма (₸)</label>
+      <input class="finput wf" type="number" id="trAmount" placeholder="0" min="1"/>
+    </div>
+    <div class="fgrp"><label>Комментарий (необязательно)</label>
+      <input class="finput wf" type="text" id="trNote" placeholder="Например: на карманные расходы"/>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="btn btn-primary" style="flex:1;justify-content:center;" id="trSubmit"><i class="fas fa-check"></i> Перевести</button>
+      <button class="btn btn-ghost" style="flex:1;justify-content:center;" onclick="this.closest('.transfer-modal').remove()">Отмена</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click',e=>{ if(e.target===m) m.remove(); });
+
+  document.getElementById('trSubmit').addEventListener('click', ()=>{
+    const fromV = document.getElementById('trFrom').value;
+    const toV   = document.getElementById('trTo').value;
+    const amt   = document.getElementById('trAmount').value;
+    const note  = document.getElementById('trNote').value.trim();
+    const fromId = fromV==='cash' ? null : parseInt(fromV);
+    const toId   = toV==='cash'   ? null : parseInt(toV);
+    const ok = transferBetweenAccounts(fromId, toId, amt, note);
+    if(ok){
+      m.remove();
+      renderActiveTab(TAB);
+    }
+  });
 }
 
 // ── GAMIFICATION ───────────────────────
@@ -1133,6 +1285,7 @@ function renderDashboard() {
           <button class="btn btn-success" id="qInc"><i class="fas fa-plus"></i> ${t('income')}</button>
           <button class="btn btn-danger" id="qExp"><i class="fas fa-minus"></i> ${t('expense')}</button>
           <button class="btn btn-primary" id="qCard"><i class="fas fa-credit-card"></i> ${t('myCards')}</button>
+          <button class="btn btn-outline" id="qTransfer"><i class="fas fa-exchange-alt"></i> Перевод</button>
           <button class="btn btn-warning" id="qExp2"><i class="fas fa-file-export"></i> ${t('export')}</button>
         </div>
       </div>
@@ -1183,25 +1336,80 @@ function renderDashboard() {
   document.getElementById('qInc').addEventListener('click',()=>{const v=prompt(t('income')+' (₸):');if(v&&parseInt(v)>0)addTx(`Доход ${parseInt(v)}`);});
   document.getElementById('qExp').addEventListener('click',()=>{const v=prompt(t('expense')+' (₸):');if(v&&parseInt(v)>0)addTx(`Расход ${parseInt(v)}`);});
   document.getElementById('qCard').addEventListener('click',()=>{document.querySelector('[data-tab="cards"]').click();});
+  document.getElementById('qTransfer').addEventListener('click', showTransferModal);
   document.getElementById('qExp2').addEventListener('click',exportReport);
 }
 
 // ── TRANSACTIONS TAB ───────────────────
 function renderTxTab() {
-  const cardOpts=DATA.cards.map(c=>`<option value="${c.id}">${c.bank} **** ${c.number}</option>`).join('');
+  const cardOpts = DATA.cards.map(c=>`<option value="${c.id}">${c.bank} **** ${c.number}</option>`).join('');
+
+  const expCats = ['Еда','Транспорт','Кафе/Доставка','Здоровье','Одежда/обувь','Развлечения',
+    'Связь/подписки','Красота/уход','Учёба','Жильё','Большая покупка','Путешествие','Подарки','Инвестиции','Другое'];
+  const incCats = ['Зарплата','Стипендия','Перевод от семьи','Кешбэк','Другой доход'];
+
   document.getElementById('content').innerHTML=`
     <div class="card" style="margin-bottom:14px;">
       <div class="clbl"><i class="fas fa-plus-circle"></i> ${t('txTitle')}</div>
-      <div class="igrp" style="margin-top:10px;">
-        <input class="finput" type="text" id="txInp" placeholder="${t('txPh')}"/>
-        ${DATA.cards.length?`<select class="fsel" id="txCardSel" style="max-width:190px;"><option value="">—</option>${cardOpts}</select>`:''}
-        <button class="btn btn-success" id="txAddBtn"><i class="fas fa-plus"></i> ${t('addBtn')}</button>
-        <button class="btn btn-danger btn-sm" id="txClrBtn"><i class="fas fa-trash"></i></button>
+
+      <!-- Type toggle -->
+      <div style="display:flex;background:var(--bg3);border-radius:var(--rsm);padding:3px;margin:12px 0 14px;gap:3px;">
+        <button id="typeExp" style="flex:1;padding:9px;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:13px;font-weight:700;cursor:pointer;background:var(--red);color:#fff;transition:all .15s;">
+          ↑ Расход
+        </button>
+        <button id="typeInc" style="flex:1;padding:9px;border:none;border-radius:6px;font-family:Inter,sans-serif;font-size:13px;font-weight:700;cursor:pointer;background:transparent;color:var(--tx2);transition:all .15s;">
+          ↓ Доход
+        </button>
       </div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:9px;" id="quickBtns">
-        ${renderQuickButtons()}
+
+      <!-- Form grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div class="fgrp" style="margin:0;">
+          <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--tx3);display:block;margin-bottom:5px;">Название (необязательно)</label>
+          <input class="finput wf" type="text" id="txName" placeholder="Например: Обед в кафе"/>
+        </div>
+        <div class="fgrp" style="margin:0;">
+          <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--tx3);display:block;margin-bottom:5px;">Сумма (₸)</label>
+          <input class="finput wf" type="number" id="txAmount" placeholder="0" min="1"/>
+        </div>
+        <div class="fgrp" style="margin:0;">
+          <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--tx3);display:block;margin-bottom:5px;">Категория</label>
+          <select class="fsel wf" id="txCat">
+            <optgroup label="— Расходы —">
+              ${expCats.map(c=>`<option value="${c}">${catEmoji(c)} ${c}</option>`).join('')}
+            </optgroup>
+            <optgroup label="— Доходы —">
+              ${incCats.map(c=>`<option value="${c}">${catEmoji(c)} ${c}</option>`).join('')}
+            </optgroup>
+          </select>
+        </div>
+        ${DATA.cards.length?`<div class="fgrp" style="margin:0;">
+          <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--tx3);display:block;margin-bottom:5px;">Карта</label>
+          <select class="fsel wf" id="txCardSel">
+            <option value="">Без карты</option>
+            ${cardOpts}
+          </select>
+        </div>`:'<div></div>'}
+      </div>
+
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-success" id="txAddBtn" style="flex:1;justify-content:center;padding:12px;">
+          <i class="fas fa-plus"></i> Добавить
+        </button>
+        <button class="btn btn-danger btn-sm" id="txClrBtn" title="Очистить все">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+
+      <!-- Quick category buttons -->
+      <div style="margin-top:12px;">
+        <div style="font-size:10px;color:var(--tx3);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;">Быстрый выбор</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;" id="quickCatBtns">
+          ${expCats.slice(0,8).map(c=>`<button class="btn btn-outline btn-sm quick-cat" data-cat="${c}" style="font-size:11px;">${catEmoji(c)} ${c}</button>`).join('')}
+        </div>
       </div>
     </div>
+
     <div class="card">
       <div class="card-hdr">
         <div class="clbl"><i class="fas fa-list-ul"></i> ${t('allOps')} (${DATA.transactions.length})</div>
@@ -1214,23 +1422,94 @@ function renderTxTab() {
       <div class="tx-list" id="fullTxList"></div>
     </div>`;
 
-  // Init quick price buttons
-  const qb = document.getElementById('quickBtns');
-  if(qb){ qb.innerHTML = renderQuickButtons(); initQuickButtons(qb); }
+  // Type toggle logic
+  let txType = 'expense';
+  const expCatList = expCats;
+  const incCatList = incCats;
 
-  document.getElementById('txAddBtn').addEventListener('click',()=>{
-    const v=document.getElementById('txInp').value.trim();
-    const s=document.getElementById('txCardSel');
-    const cid=s&&s.value?parseInt(s.value):null;
-    if(v){const ok=addTx(v,cid);if(ok)document.getElementById('txInp').value='';}
+  function setType(type) {
+    txType = type;
+    const btnExp = document.getElementById('typeExp');
+    const btnInc = document.getElementById('typeInc');
+    if(type==='expense'){
+      btnExp.style.background='var(--red)'; btnExp.style.color='#fff';
+      btnInc.style.background='transparent'; btnInc.style.color='var(--tx2)';
+    } else {
+      btnInc.style.background='var(--green)'; btnInc.style.color='#fff';
+      btnExp.style.background='transparent'; btnExp.style.color='var(--tx2)';
+    }
+    // Update category options
+    const cat = document.getElementById('txCat');
+    const cats = type==='expense' ? expCatList : incCatList;
+    cat.innerHTML = cats.map(c=>`<option value="${c}">${catEmoji(c)} ${c}</option>`).join('');
+    // Update quick buttons
+    const qb = document.getElementById('quickCatBtns');
+    if(qb) qb.innerHTML = cats.slice(0,8).map(c=>`<button class="btn btn-outline btn-sm quick-cat" data-cat="${c}" style="font-size:11px;">${catEmoji(c)} ${c}</button>`).join('');
+    bindQuickCats();
+  }
+
+  function bindQuickCats() {
+    document.querySelectorAll('.quick-cat').forEach(b=>{
+      b.addEventListener('click',()=>{
+        document.getElementById('txCat').value = b.dataset.cat;
+        document.querySelectorAll('.quick-cat').forEach(x=>{ x.style.borderColor=''; x.style.color=''; });
+        b.style.borderColor='var(--acc)'; b.style.color='var(--acc2)';
+        // Auto-fill name from category so the user only has to type the amount
+        const nameEl = document.getElementById('txName');
+        if(nameEl && !nameEl.value.trim()) nameEl.value = b.dataset.cat;
+        // Focus amount field
+        document.getElementById('txAmount').focus();
+      });
+    });
+  }
+
+  document.getElementById('typeExp').addEventListener('click', ()=>setType('expense'));
+  document.getElementById('typeInc').addEventListener('click', ()=>setType('income'));
+  bindQuickCats();
+
+  // Add transaction
+  document.getElementById('txAddBtn').addEventListener('click', ()=>{
+    const cat    = document.getElementById('txCat').value || 'Другое';
+    // Name is optional — if the user just picked a category and typed an amount,
+    // fall back to the category as the transaction name.
+    const name   = document.getElementById('txName').value.trim() || cat;
+    const amount = parseFloat(document.getElementById('txAmount').value);
+    const cardEl = document.getElementById('txCardSel');
+    const cid    = cardEl && cardEl.value ? parseInt(cardEl.value) : null;
+
+    if(!amount || amount <= 0){ alert('Введите сумму больше 0'); return; }
+
+    const tx = {
+      id: DATA.nextId++,
+      text: name,
+      amount: Math.round(amount),
+      type: txType,
+      category: cat,
+      date: Date.now(),
+      cardId: cid
+    };
+    DATA.transactions.push(tx);
+    DATA.xp += 5;
+    if(DATA.xp>=100){DATA.level+=Math.floor(DATA.xp/100);DATA.xp=DATA.xp%100;updateRank();}
+    if(cid) updateCardBalance(cid, tx.amount, txType);
+    checkAch(); saveData(); renderHeader();
+
+    // Clear only name and amount, keep category
+    document.getElementById('txName').value='';
+    document.getElementById('txAmount').value='';
+    document.getElementById('txName').focus();
+    renderFullTxList(cf);
   });
-  document.getElementById('txInp').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('txAddBtn').click();});
+
+  // Enter key on amount adds transaction
+  document.getElementById('txAmount').addEventListener('keydown',e=>{
+    if(e.key==='Enter') document.getElementById('txAddBtn').click();
+  });
+
   document.getElementById('txClrBtn').addEventListener('click',()=>{
     if(confirm(t('confirm_clear'))){DATA.transactions=[];saveData();renderTxTab();renderHeader();}
   });
-  document.querySelectorAll('.template').forEach(b=>{
-    b.addEventListener('click',()=>{document.getElementById('txInp').value=b.dataset.text;document.getElementById('txAddBtn').click();});
-  });
+
   let cf='all';
   document.querySelectorAll('.filter-btn').forEach(b=>{
     b.addEventListener('click',()=>{
@@ -1317,7 +1596,10 @@ function renderCardsTab() {
       </div>
     </div>
     <div class="card">
-      <div class="card-hdr"><div class="clbl"><i class="fas fa-credit-card"></i> ${t('myCards')} (${DATA.cards.length})</div></div>
+      <div class="card-hdr">
+        <div class="clbl"><i class="fas fa-credit-card"></i> ${t('myCards')} (${DATA.cards.length})</div>
+        <button class="btn btn-outline btn-sm" id="openTransferBtn"><i class="fas fa-exchange-alt"></i> Перевод между счетами</button>
+      </div>
       <div class="cards-grid" id="cardsList"></div>
     </div>`;
 
@@ -1351,6 +1633,7 @@ function renderCardsTab() {
       document.getElementById('cExpiry').value,document.getElementById('cBank').value,
       document.getElementById('cType').value,selCol);
   });
+  document.getElementById('openTransferBtn')?.addEventListener('click', showTransferModal);
   renderCardsList();
 }
 
@@ -1863,9 +2146,13 @@ function renderRoadmap() {
 
 // ── DEPOSITS TAB ───────────────────────
 function renderDepositsTab() {
-  if(!DATA.deposits)DATA.deposits=[];
-  const totAmt=DATA.deposits.reduce((s,d)=>s+d.amount,0);
-  const totInc=DATA.deposits.reduce((s,d)=>s+d.income,0);
+  if(!DATA.deposits) DATA.deposits=[];
+  // Migrate old deposits: add currentAmount if missing
+  DATA.deposits.forEach(d=>{ if(!d.currentAmount) d.currentAmount=d.amount; if(!d.history) d.history=[]; });
+
+  const totAmt = DATA.deposits.reduce((s,d)=>s+(d.currentAmount||d.amount),0);
+  const totInc = DATA.deposits.reduce((s,d)=>s+d.income,0);
+
   document.getElementById('content').innerHTML=`
     <div class="card" style="margin-bottom:14px;">
       <div class="clbl"><i class="fas fa-piggy-bank"></i> ${t('newDep')}</div>
@@ -1877,48 +2164,150 @@ function renderDepositsTab() {
       </div>
       <button class="btn btn-primary wf" id="dAddBtn"><i class="fas fa-plus"></i> ${t('addDep')}</button>
     </div>
-    ${DATA.deposits.length?`<div class="grid2" style="margin-bottom:14px;">
-      <div class="card"><div class="clbl"><i class="fas fa-coins"></i> ${t('depAmt')}</div>
-        <div style="font-size:26px;font-weight:800;color:var(--acc2);margin-top:7px;">${fmtAmt(totAmt)}</div>
+
+    ${DATA.deposits.length ? `
+    <div class="grid3" style="margin-bottom:14px;">
+      <div class="card">
+        <div class="clbl"><i class="fas fa-coins"></i> Всего на депозитах</div>
+        <div style="font-size:24px;font-weight:800;color:var(--acc2);margin-top:6px;">${fmtAmt(totAmt)}</div>
       </div>
-      <div class="card"><div class="clbl"><i class="fas fa-chart-line"></i> ${t('depTitle')}</div>
-        <div style="font-size:26px;font-weight:800;color:var(--green);margin-top:7px;">+${fmtAmt(totInc)}</div>
+      <div class="card">
+        <div class="clbl"><i class="fas fa-chart-line"></i> Ожидаемый доход</div>
+        <div style="font-size:24px;font-weight:800;color:var(--green);margin-top:6px;">+${fmtAmt(totInc)}</div>
       </div>
-    </div>`:''}
+      <div class="card">
+        <div class="clbl"><i class="fas fa-piggy-bank"></i> Депозитов</div>
+        <div style="font-size:24px;font-weight:800;color:var(--gold);margin-top:6px;">${DATA.deposits.length}</div>
+      </div>
+    </div>` : ''}
+
     <div class="card">
-      <div class="card-hdr"><div class="clbl"><i class="fas fa-piggy-bank"></i> ${t('myDeps')}</div><span style="font-size:11px;color:var(--tx3);">${DATA.deposits.length}</span></div>
+      <div class="card-hdr">
+        <div class="clbl"><i class="fas fa-piggy-bank"></i> ${t('myDeps')}</div>
+      </div>
       <div id="depList"></div>
     </div>`;
 
   document.getElementById('dAddBtn').addEventListener('click',()=>{
-    addDeposit(document.getElementById('dName').value.trim(),
+    addDeposit(
+      document.getElementById('dName').value.trim(),
       parseFloat(document.getElementById('dAmt').value)||0,
       parseFloat(document.getElementById('dRate').value)||0,
-      parseInt(document.getElementById('dMonths').value)||0);
+      parseInt(document.getElementById('dMonths').value)||0
+    );
   });
 
-  const dlist=document.getElementById('depList');
-  if(!DATA.deposits.length){dlist.innerHTML=`<div style="text-align:center;padding:20px;color:var(--tx3);">${t('noDeps')}</div>`;return;}
-  dlist.innerHTML=DATA.deposits.map(d=>{
-    const end=new Date(d.createdAt+d.months*30*864e5).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});
-    return `<div class="dep-item">
-      <div class="dep-main">
-        <div class="dep-name">🏦 ${d.name}</div>
-        <div class="dep-tags">
-          <span class="dep-tag">${d.rate}% ${t('perYear')}</span>
-          <span class="dep-tag">${d.months} ${t('months')}</span>
-          <span class="dep-tag">→ ${end}</span>
+  const dlist = document.getElementById('depList');
+  if(!DATA.deposits.length){
+    dlist.innerHTML=`<div style="text-align:center;padding:24px;color:var(--tx3);"><i class="fas fa-piggy-bank" style="font-size:32px;opacity:.2;display:block;margin-bottom:8px;"></i>${t('noDeps')}</div>`;
+    return;
+  }
+
+  dlist.innerHTML = DATA.deposits.map(d=>{
+    const cur = d.currentAmount || d.amount;
+    const end = new Date(d.createdAt+d.months*30*864e5).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const daysLeft = Math.max(0, Math.ceil((d.createdAt+d.months*30*864e5 - Date.now())/864e5));
+    const progress = Math.min(100, Math.round((Date.now()-d.createdAt)/(d.months*30*864e5)*100));
+    const history = (d.history||[]).slice(-3).reverse();
+
+    return `<div style="background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);margin-bottom:10px;overflow:hidden;">
+      <!-- Header -->
+      <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px;">🏦 ${d.name}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <span style="font-size:10px;background:var(--bg4);padding:2px 8px;border-radius:20px;color:var(--tx3);">${d.rate}% год</span>
+            <span style="font-size:10px;background:var(--bg4);padding:2px 8px;border-radius:20px;color:var(--tx3);">${d.months} мес</span>
+            <span style="font-size:10px;background:var(--bg4);padding:2px 8px;border-radius:20px;color:var(--tx3);">до ${end}</span>
+            ${daysLeft > 0 ? `<span style="font-size:10px;background:rgba(245,158,11,.12);padding:2px 8px;border-radius:20px;color:var(--gold);">⏳ ${daysLeft} дн.</span>` : `<span style="font-size:10px;background:rgba(16,185,129,.12);padding:2px 8px;border-radius:20px;color:var(--green);">✅ Завершён</span>`}
+          </div>
+        </div>
+        <button class="tx-del dep-del" data-id="${d.id}" style="margin-top:2px;"><i class="fas fa-times"></i></button>
+      </div>
+
+      <!-- Balance row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--brd);border-bottom:1px solid var(--brd);">
+        <div style="padding:11px 16px;border-right:1px solid var(--brd);">
+          <div style="font-size:10px;color:var(--tx3);margin-bottom:3px;">Текущий баланс</div>
+          <div style="font-size:18px;font-weight:800;color:var(--acc2);">${fmtAmt(cur)}</div>
+        </div>
+        <div style="padding:11px 16px;">
+          <div style="font-size:10px;color:var(--tx3);margin-bottom:3px;">Ожид. доход</div>
+          <div style="font-size:18px;font-weight:800;color:var(--green);">+${fmtAmt(d.income)}</div>
         </div>
       </div>
-      <div class="dep-right">
-        <div class="dep-amount">${fmtAmt(d.amount)}</div>
-        <div class="dep-income">+${fmtAmt(d.income)}</div>
+
+      <!-- Progress bar -->
+      <div style="padding:8px 16px;border-bottom:1px solid var(--brd);">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--tx3);margin-bottom:4px;">
+          <span>Прогресс срока</span><span>${progress}%</span>
+        </div>
+        <div style="height:4px;background:var(--bg4);border-radius:4px;overflow:hidden;">
+          <div style="height:100%;width:${progress}%;background:linear-gradient(90deg,var(--acc),var(--green));border-radius:4px;transition:width .5s;"></div>
+        </div>
       </div>
-      <button class="tx-del dep-del" data-id="${d.id}"><i class="fas fa-times"></i></button>
+
+      ${history.length ? `
+      <!-- Recent history -->
+      <div style="padding:8px 16px;border-bottom:1px solid var(--brd);">
+        <div style="font-size:10px;color:var(--tx3);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;">История операций</div>
+        ${history.map(h=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:11px;">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <span style="color:${h.type==='deposit'?'var(--green)':'var(--gold)'};">${h.type==='deposit'?'↑':'↓'}</span>
+            <span style="color:var(--tx2);">${h.note||''}</span>
+            <span style="color:var(--tx3);">${new Date(h.date).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'})}</span>
+          </div>
+          <strong style="color:${h.type==='deposit'?'var(--green)':'var(--gold)'};">${h.type==='deposit'?'+':'-'}${fmtAmt(h.amount)}</strong>
+        </div>`).join('')}
+      </div>` : ''}
+
+      <!-- Action buttons -->
+      <div style="display:flex;gap:8px;padding:12px 16px;">
+        <button class="btn btn-success btn-sm dep-add-btn" data-id="${d.id}" style="flex:1;justify-content:center;">
+          <i class="fas fa-plus"></i> Пополнить
+        </button>
+        <button class="btn btn-warning btn-sm dep-withdraw-btn" data-id="${d.id}" style="flex:1;justify-content:center;">
+          <i class="fas fa-minus"></i> Снять
+        </button>
+      </div>
     </div>`;
   }).join('');
+
+  // Delete
   dlist.querySelectorAll('.dep-del').forEach(b=>{
-    b.addEventListener('click',()=>{if(confirm(t('delDep'))){DATA.deposits=DATA.deposits.filter(d=>d.id!==parseInt(b.dataset.id));saveData();renderDepositsTab();}});
+    b.addEventListener('click',()=>{
+      if(confirm(t('delDep'))){
+        DATA.deposits=DATA.deposits.filter(d=>d.id!==parseInt(b.dataset.id));
+        saveData(); renderDepositsTab();
+      }
+    });
+  });
+
+  // Add money
+  dlist.querySelectorAll('.dep-add-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const dep = DATA.deposits.find(d=>d.id===parseInt(b.dataset.id)); if(!dep) return;
+      const amtStr = prompt('💰 Сколько пополнить (₸)?');
+      if(!amtStr) return;
+      const amt = parseFloat(amtStr.replace(/\s/g,''));
+      if(!amt||amt<=0){alert('Введите сумму больше 0');return;}
+      const note = prompt('📝 Примечание (необязательно):') || 'Пополнение';
+      depositToAccount(dep.id, amt, note);
+    });
+  });
+
+  // Withdraw money
+  dlist.querySelectorAll('.dep-withdraw-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const dep = DATA.deposits.find(d=>d.id===parseInt(b.dataset.id)); if(!dep) return;
+      const cur = dep.currentAmount || dep.amount;
+      const amtStr = prompt(`💸 Сколько снять? (доступно: ${fmtAmt(cur)})`);
+      if(!amtStr) return;
+      const amt = parseFloat(amtStr.replace(/\s/g,''));
+      if(!amt||amt<=0){alert('Введите сумму больше 0');return;}
+      const note = prompt('📝 Примечание (необязательно):') || 'Снятие';
+      withdrawFromDeposit(dep.id, amt, note);
+    });
   });
 }
 
