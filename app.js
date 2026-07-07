@@ -218,6 +218,144 @@ function hashPass(p) {
   return 'mw_'+a+'_'+b;
 }
 
+// ── PASSWORD RESET (forgot password) ───────────────────────
+// To make real emails arrive, create a free account at https://www.emailjs.com,
+// set up an Email Service + Template (with a {{code}} variable), then fill in
+// the three values below. Until they're filled in, the app runs in "demo mode":
+// the code is shown directly on screen instead of being emailed, so the whole
+// flow (request code → enter code → set new password) still works end-to-end.
+const EMAILJS_CONFIG = {
+  publicKey: 'YOUR_PUBLIC_KEY',
+  serviceId: 'YOUR_SERVICE_ID',
+  templateId: 'YOUR_TEMPLATE_ID'
+};
+
+function emailjsConfigured() {
+  return EMAILJS_CONFIG.publicKey !== 'YOUR_PUBLIC_KEY' &&
+         EMAILJS_CONFIG.serviceId !== 'YOUR_SERVICE_ID' &&
+         EMAILJS_CONFIG.templateId !== 'YOUR_TEMPLATE_ID' &&
+         typeof window.emailjs !== 'undefined';
+}
+
+function generateResetCode(email) {
+  const code = Math.floor(100000 + Math.random()*900000).toString();
+  localStorage.setItem('mw_reset_'+email, JSON.stringify({code, expires: Date.now()+10*60*1000}));
+  return code;
+}
+
+// Returns a Promise<boolean> — true if a real email was sent via EmailJS, false if demo mode.
+function sendResetCodeEmail(email, code) {
+  return new Promise((resolve)=>{
+    if(emailjsConfigured()){
+      if(!window._emailjsInited){ emailjs.init(EMAILJS_CONFIG.publicKey); window._emailjsInited=true; }
+      emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {to_email:email, email, code, passcode:code})
+        .then(()=>resolve(true))
+        .catch((err)=>{ console.error('EmailJS send failed:', err); resolve(false); });
+    } else {
+      resolve(false);
+    }
+  });
+}
+
+function showForgotPasswordModal() {
+  document.querySelector('.fp-modal')?.remove();
+  const m=document.createElement('div');
+  m.className='modal-ov fp-modal';
+  m.innerHTML=`<div class="modal-box" style="max-width:400px;">
+    <div class="modal-hdr">
+      <h3><i class="fas fa-key"></i> Восстановление пароля</h3>
+      <button class="modal-close" onclick="this.closest('.fp-modal').remove()">✕</button>
+    </div>
+    <div id="fpStep1">
+      <div class="fgrp">
+        <label>Email вашего аккаунта</label>
+        <input class="finput wf" type="email" id="fpEmail" placeholder="you@example.com"/>
+      </div>
+      <div id="fpError1" class="auth-error hidden" style="margin-bottom:10px;"></div>
+      <button class="btn btn-primary wf" id="fpSendBtn"><i class="fas fa-paper-plane"></i> Отправить код на email</button>
+    </div>
+    <div id="fpStep2" class="hidden">
+      <div id="fpNotice" style="font-size:12px;color:var(--tx2);background:var(--bg3);border:1px solid var(--brd2);border-radius:var(--rsm);padding:10px 12px;margin-bottom:14px;line-height:1.5;"></div>
+      <div class="fgrp">
+        <label>Код из письма (6 цифр)</label>
+        <input class="finput wf" type="text" id="fpCode" maxlength="6" placeholder="000000"/>
+      </div>
+      <div class="fgrp">
+        <label>Новый пароль</label>
+        <input class="finput wf" type="password" id="fpPass1" placeholder="Минимум 6 символов"/>
+      </div>
+      <div class="fgrp">
+        <label>Повторите новый пароль</label>
+        <input class="finput wf" type="password" id="fpPass2" placeholder="Повторите пароль"/>
+      </div>
+      <div id="fpError2" class="auth-error hidden" style="margin-bottom:10px;"></div>
+      <button class="btn btn-primary wf" id="fpSaveBtn" style="margin-bottom:8px;"><i class="fas fa-check"></i> Сохранить новый пароль</button>
+      <button class="btn btn-outline wf" id="fpResendBtn">Отправить код ещё раз</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click',e=>{ if(e.target===m) m.remove(); });
+
+  const emailErr=(id,msg)=>{ const el=document.getElementById(id); el.textContent=msg; el.classList.remove('hidden'); };
+
+  function requestCode(){
+    const email=document.getElementById('fpEmail').value.trim().toLowerCase();
+    document.getElementById('fpError1').classList.add('hidden');
+    if(!email||!email.includes('@')){ emailErr('fpError1','Введите корректный email'); return; }
+    const accs=getAccounts();
+    if(!accs[email]){ emailErr('fpError1','Аккаунт с таким email не найден'); return; }
+    const code=generateResetCode(email);
+    const btn=document.getElementById('fpSendBtn');
+    btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Отправка...';
+    sendResetCodeEmail(email, code).then(sent=>{
+      btn.disabled=false; btn.innerHTML='<i class="fas fa-paper-plane"></i> Отправить код на email';
+      document.getElementById('fpStep1').classList.add('hidden');
+      document.getElementById('fpStep2').classList.remove('hidden');
+      document.getElementById('fpStep2').dataset.email=email;
+      const notice=document.getElementById('fpNotice');
+      if(sent){
+        notice.innerHTML=`✅ Код отправлен на <b>${email}</b>. Проверьте почту (и папку «Спам») — код действует 10 минут.`;
+      } else {
+        notice.innerHTML=`⚠️ Реальная отправка email пока не настроена (демо-режим). Ваш код: <b style="font-size:16px;letter-spacing:2px;">${code}</b><br><span style="color:var(--tx3);">Чтобы коды приходили на настоящую почту, добавьте свои данные EmailJS в EMAILJS_CONFIG в app.js.</span>`;
+      }
+    });
+  }
+
+  document.getElementById('fpSendBtn').addEventListener('click', requestCode);
+  document.getElementById('fpEmail').addEventListener('keydown', e=>{ if(e.key==='Enter') requestCode(); });
+  document.getElementById('fpResendBtn').addEventListener('click', requestCode);
+
+  document.getElementById('fpSaveBtn').addEventListener('click', ()=>{
+    const email=document.getElementById('fpStep2').dataset.email;
+    const code=document.getElementById('fpCode').value.trim();
+    const p1=document.getElementById('fpPass1').value;
+    const p2=document.getElementById('fpPass2').value;
+    document.getElementById('fpError2').classList.add('hidden');
+
+    let stored=null;
+    try{ stored=JSON.parse(localStorage.getItem('mw_reset_'+email)||'null'); }catch{}
+    if(!stored){ emailErr('fpError2','Сначала запросите код'); return; }
+    if(Date.now()>stored.expires){ emailErr('fpError2','Код истёк, запросите новый'); return; }
+    if(code!==stored.code){ emailErr('fpError2','Неверный код'); return; }
+    const passCheck=validatePass(p1);
+    if(!passCheck.ok){ emailErr('fpError2','❌ '+passCheck.msg); return; }
+    if(p1!==p2){ emailErr('fpError2','Пароли не совпадают'); return; }
+
+    const accs=getAccounts();
+    if(!accs[email]){ emailErr('fpError2','Аккаунт не найден'); return; }
+    accs[email].password=hashPass(p1);
+    saveAccounts(accs);
+    localStorage.removeItem('mw_reset_'+email);
+
+    m.remove();
+    document.querySelector('[data-auth="login"]').click();
+    document.getElementById('loginEmail').value=email;
+    document.getElementById('loginPassword').value='';
+    const ok=document.getElementById('loginSuccess');
+    if(ok){ ok.textContent='✅ Пароль изменён! Войдите с новым паролем.'; ok.classList.remove('hidden'); setTimeout(()=>ok.classList.add('hidden'),6000); }
+  });
+}
+
 function validatePass(p) {
   if(!p||p.length<6) return {ok:false, msg:'Минимум 6 символов'};
   if(!/[A-Z]/.test(p)) return {ok:false, msg:'Нужна хотя бы 1 заглавная буква (A-Z)'};
@@ -440,6 +578,8 @@ function initAuth() {
   document.getElementById('registerBtn').addEventListener('click',doRegister);
   document.getElementById('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   if(regPass) regPass.addEventListener('keydown',e=>{if(e.key==='Enter')doRegister();});
+  const forgotLink=document.getElementById('forgotPassLink');
+  if(forgotLink) forgotLink.addEventListener('click', e=>{ e.preventDefault(); showForgotPasswordModal(); });
 
   // Check saved session
   const sess=getSession();

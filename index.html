@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Way</title>
+<link rel="icon" type="image/png" href="logo.png">
 <link rel="stylesheet" href="style.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -23,18 +24,7 @@
 
     <!-- LOGO -->
     <div class="auth-logo">
-      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-        <defs>
-          <linearGradient id="lg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#7c3aed"/>
-            <stop offset="100%" stop-color="#06b6d4"/>
-          </linearGradient>
-        </defs>
-        <rect width="48" height="48" rx="14" fill="url(#lg)"/>
-        <path d="M9 34 L9 17 L17 27 L24 17 L24 34" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <path d="M26 17 L30 30 L34 22 L38 30 L42 17" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <circle cx="38" cy="35" r="3" fill="#06b6d4"/>
-      </svg>
+      <img src="logo.png" width="48" height="48" alt="My Way" style="border-radius:14px;display:block;"/>
       <div>
         <div class="auth-logo-name">My Way</div>
         <div class="auth-logo-sub" id="authSub">Твой финансовый путь</div>
@@ -64,6 +54,9 @@
         <i class="fas fa-lock fi"></i>
         <input type="password" id="loginPassword" placeholder="Пароль" autocomplete="current-password"/>
 
+      </div>
+      <div style="text-align:right;margin:-4px 0 12px;">
+        <a href="#" id="forgotPassLink" style="font-size:11.5px;color:var(--acc2);text-decoration:none;font-weight:600;">Забыли пароль?</a>
       </div>
       <button class="btn btn-primary wf" id="loginBtn">
         <i class="fas fa-sign-in-alt"></i> <span id="loginBtnTxt">Войти</span>
@@ -112,15 +105,7 @@
 <div id="app" class="hidden app-layout">
   <aside id="sidebar" class="sidebar">
     <div class="sb-logo">
-      <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
-        <defs><linearGradient id="slg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#06b6d4"/>
-        </linearGradient></defs>
-        <rect width="48" height="48" rx="14" fill="url(#slg)"/>
-        <path d="M9 34 L9 17 L17 27 L24 17 L24 34" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <path d="M26 17 L30 30 L34 22 L38 30 L42 17" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <circle cx="38" cy="35" r="3" fill="#06b6d4"/>
-      </svg>
+      <img src="logo.png" width="30" height="30" alt="My Way" style="border-radius:9px;display:block;"/>
       <span class="sb-logo-name">My Way</span>
     </div>
     <nav id="nav" class="sb-nav"></nav>
