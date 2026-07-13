@@ -379,12 +379,40 @@ function validatePass(p) {
 // ── ACCOUNTS ───────────────────────────
 let CUR_USER = null;
 
-function getAccounts() {
-  try{ return JSON.parse(localStorage.getItem('mw_accs')||'{}'); } catch{ return {}; }
+// ── BACKEND API ─────────────────────────────────────────────
+// Раньше "аккаунты" были просто ключом в localStorage — это удобно
+// для демо, но означает, что данные не переживают смену браузера/
+// устройства и это не настоящая авторизация. Теперь регистрация,
+// логин и хранение данных идут через server.js (см. /server).
+// localStorage используется только как offline-кэш последней
+// известной копии данных, чтобы приложение не "падало" без сети.
+const API_BASE = '/api';
+
+function getToken() {
+  try{ return localStorage.getItem('mw_token')||null; } catch{ return null; }
 }
-function saveAccounts(a) {
-  try{ localStorage.setItem('mw_accs',JSON.stringify(a)); } catch{}
+function setToken(tok) {
+  try{ tok?localStorage.setItem('mw_token',tok):localStorage.removeItem('mw_token'); } catch{}
 }
+async function apiFetch(path, opts={}) {
+  const headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
+  const token = getToken();
+  if(token) headers['Authorization'] = 'Bearer '+token;
+  const res = await fetch(API_BASE+path, Object.assign({}, opts, {headers}));
+  let data = {};
+  try{ data = await res.json(); }catch{}
+  if(!res.ok) throw new Error(data.error || ('Ошибка сервера ('+res.status+')'));
+  return data;
+}
+
+// Локальный кэш данных пользователя (fallback, если сервер недоступен)
+function getLocalCache(email) {
+  try{ return JSON.parse(localStorage.getItem('mw_cache_'+email)||'null'); }catch{ return null; }
+}
+function setLocalCache(email, data) {
+  try{ localStorage.setItem('mw_cache_'+email, JSON.stringify(data)); }catch{}
+}
+
 function getSession() {
   try{ return localStorage.getItem('mw_sess')||null; } catch{ return null; }
 }
@@ -407,31 +435,47 @@ function defaultData() {
 }
 
 let DATA = defaultData();
+let _saveDebounce = null;
+let _lastSyncFailed = false;
 
+// saveData() остаётся синхронной (её вызывают из десятков мест в коде
+// сразу после изменения DATA), поэтому: 1) мгновенно пишем в локальный
+// кэш, чтобы UI не терял данные при обрыве связи, 2) с debounce
+// отправляем актуальную копию на сервер, чтобы не долбить API на
+// каждый чих (например, при вводе текста).
 function saveData() {
   if(!CUR_USER) return;
-  try{
-    const a=getAccounts();
-    if(a[CUR_USER.email]){a[CUR_USER.email].data=DATA;saveAccounts(a);}
-  }catch{}
+  setLocalCache(CUR_USER.email, DATA);
+  clearTimeout(_saveDebounce);
+  _saveDebounce = setTimeout(()=>{
+    apiFetch('/data', {method:'PUT', body:JSON.stringify({data:DATA})})
+      .then(()=>{ _lastSyncFailed=false; })
+      .catch(()=>{
+        if(!_lastSyncFailed) console.warn('[My Way] Не удалось синхронизировать данные с сервером — работаем из локального кэша.');
+        _lastSyncFailed = true;
+      });
+  }, 600);
 }
-function loadData() {
+
+async function loadData() {
   if(!CUR_USER) return;
+  let serverData = null;
   try{
-    const a=getAccounts();
-    const u=a[CUR_USER.email];
-    if(u&&u.data) {
-      DATA=Object.assign(defaultData(),u.data);
-      // ВАЖНО: trialStart берётся ТОЛЬКО из сохранённых данных пользователя
-      // чтобы таймер не сбрасывался при каждом входе
-      if(u.data.trialStart) DATA.trialStart = u.data.trialStart;
-      else if(u.joinedAt) DATA.trialStart = u.joinedAt; // fallback к дате регистрации
-    }
-    if(!DATA.deposits) DATA.deposits=[];
-    if(!DATA.cards) DATA.cards=[];
-    CUR_KEY = localStorage.getItem('mw_cur_'+CUR_USER.email)||'KZT';
-    LANG = DATA.lang||localStorage.getItem('mw_lang')||'ru';
-  }catch{}
+    const res = await apiFetch('/data');
+    serverData = res.data;
+  }catch(e){
+    console.warn('[My Way] Не удалось получить данные с сервера, используем локальный кэш:', e.message);
+  }
+  const src = serverData || getLocalCache(CUR_USER.email);
+  if(src) {
+    DATA = Object.assign(defaultData(), src);
+    if(!src.trialStart) DATA.trialStart = Date.now();
+  }
+  if(!DATA.deposits) DATA.deposits=[];
+  if(!DATA.cards) DATA.cards=[];
+  CUR_KEY = localStorage.getItem('mw_cur_'+CUR_USER.email)||'KZT';
+  LANG = DATA.lang||localStorage.getItem('mw_lang')||'ru';
+  if(serverData) setLocalCache(CUR_USER.email, DATA);
 }
 
 function isPremium() {
