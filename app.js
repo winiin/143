@@ -205,17 +205,28 @@ function catEmoji(cat) {
 }
 
 // ── SECURITY UTILS ─────────────────────
-function hashPass(p) {
-  // Safe deterministic hash — no btoa (crashes on special chars)
-  let h1=5381, h2=52711;
-  for(let i=0;i<p.length;i++){
-    const c=p.charCodeAt(i);
-    h1=((h1<<5)+h1)^c;
-    h2=((h2<<5)+h2)^(c*31);
-  }
-  const a=Math.abs(h1).toString(36);
-  const b=Math.abs(h2).toString(36);
-  return 'mw_'+a+'_'+b;
+// ── PASSWORD HASHING (Web Crypto, PBKDF2-SHA256) ───────────
+// NOTE: the whole app is a static frontend using localStorage as its
+// "database", so this still runs in the browser. PBKDF2+random salt is
+// far stronger than a custom hash and stops a raw password ever being
+// stored — but it does NOT replace real server-side auth. Before going
+// live, move account creation/login to a real backend (see server.js).
+function bytesToHex(bytes){ return Array.from(bytes).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function hexToBytes(hex){ const arr=new Uint8Array(hex.length/2); for(let i=0;i<arr.length;i++) arr[i]=parseInt(hex.substr(i*2,2),16); return arr; }
+
+async function hashPass(password, saltHex) {
+  const enc = new TextEncoder();
+  const salt = saltHex ? hexToBytes(saltHex) : crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({name:'PBKDF2', salt, iterations:100000, hash:'SHA-256'}, keyMaterial, 256);
+  return bytesToHex(salt) + ':' + bytesToHex(new Uint8Array(bits));
+}
+
+async function verifyPass(password, stored) {
+  if(!stored || stored.indexOf(':')===-1) return false;
+  const saltHex = stored.split(':')[0];
+  const recomputed = await hashPass(password, saltHex);
+  return recomputed === stored;
 }
 
 // ── PASSWORD RESET (forgot password) ───────────────────────
@@ -325,7 +336,7 @@ function showForgotPasswordModal() {
   document.getElementById('fpEmail').addEventListener('keydown', e=>{ if(e.key==='Enter') requestCode(); });
   document.getElementById('fpResendBtn').addEventListener('click', requestCode);
 
-  document.getElementById('fpSaveBtn').addEventListener('click', ()=>{
+  document.getElementById('fpSaveBtn').addEventListener('click', async ()=>{
     const email=document.getElementById('fpStep2').dataset.email;
     const code=document.getElementById('fpCode').value.trim();
     const p1=document.getElementById('fpPass1').value;
@@ -343,7 +354,7 @@ function showForgotPasswordModal() {
 
     const accs=getAccounts();
     if(!accs[email]){ emailErr('fpError2','Аккаунт не найден'); return; }
-    accs[email].password=hashPass(p1);
+    accs[email].password=await hashPass(p1);
     saveAccounts(accs);
     localStorage.removeItem('mw_reset_'+email);
 
@@ -506,18 +517,15 @@ function getSubscriptionStatus() {
 }
 
 // ── AUTH ────────────────────────────────
-function initAuth() {
-  // Demo account
+async function initAuth() {
+  // Demo account — recreated on every load so its password always works,
+  // since PBKDF2 uses a random salt and won't match a previous hash string.
   const accs=getAccounts();
-  // Always refresh demo account so hash stays current
-  const demoHash=hashPass('Demo@123!');
-  if(!accs['demo@myway.kz']||accs['demo@myway.kz'].password!==demoHash){
-    const demoData=accs['demo@myway.kz']?.data||defaultData();
-    demoData.premium=true;
-    demoData.trialStart = Date.now(); // Demo always has fresh 30-day trial
-    accs['demo@myway.kz']={name:'Демо',email:'demo@myway.kz',password:demoHash,data:demoData,joinedAt:Date.now()};
-    saveAccounts(accs);
-  }
+  const demoData=accs['demo@myway.kz']?.data||defaultData();
+  demoData.premium=true;
+  demoData.trialStart = Date.now(); // Demo always has fresh 30-day trial
+  accs['demo@myway.kz']={name:'Демо',email:'demo@myway.kz',password:await hashPass('Demo@123!'),data:demoData,joinedAt:Date.now()};
+  saveAccounts(accs);
 
   // Language switcher on auth screen
   document.querySelectorAll('.lang-pill').forEach(p=>{
@@ -628,18 +636,19 @@ function showErr(id,msg){
   el._hideTimer=setTimeout(()=>el.classList.add('hidden'),5000);
 }
 
-function doLogin() {
+async function doLogin() {
   const email=document.getElementById('loginEmail').value.trim().toLowerCase();
   const pass=document.getElementById('loginPassword').value;
   if(!email||!pass){showErr('loginError',t('fillAll'));return;}
   const accs=getAccounts();
   if(!accs[email]){showErr('loginError',t('userNotFound'));return;}
-  if(accs[email].password!==hashPass(pass)){showErr('loginError',t('wrongPass'));return;}
+  const ok=await verifyPass(pass, accs[email].password);
+  if(!ok){showErr('loginError',t('wrongPass'));return;}
   CUR_USER={name:accs[email].name,email,avatar:accs[email].name.charAt(0).toUpperCase()};
   setSession(email); loadData(); showApp();
 }
 
-function doRegister() {
+async function doRegister() {
   const name=document.getElementById('regName').value.trim();
   const email=document.getElementById('regEmail').value.trim().toLowerCase();
   const pass=document.getElementById('regPassword').value;
@@ -650,7 +659,7 @@ function doRegister() {
   const accs=getAccounts();
   if(accs[email]){showErr('registerError',t('emailExists'));return;}
   const d=defaultData(); d.lang=LANG; d.trialStart=Date.now(); // Set ONCE at registration
-  accs[email]={name,email,password:hashPass(pass),data:d,joinedAt:Date.now()};
+  accs[email]={name,email,password:await hashPass(pass),data:d,joinedAt:Date.now()};
   saveAccounts(accs);
   CUR_USER={name,email,avatar:name.charAt(0).toUpperCase()};
   setSession(email); loadData(); showApp();
@@ -2577,16 +2586,40 @@ function buildCtx() {
   return `Пользователь: ${CUR_USER.name}. Доходы: ${inc.toLocaleString()}₸, Расходы: ${exp.toLocaleString()}₸, Баланс: ${(inc-exp).toLocaleString()}₸. Топ расходы: ${top||'нет'}. Карт: ${DATA.cards.length}. Цели: ${goals||'нет'}. Депозитов: ${DATA.deposits.length}. Уровень: ${DATA.level}, XP: ${DATA.xp}.`;
 }
 
+// AI call strategy, in order of preference:
+//  1. Our own backend proxy (server.js) — best for production: users don't
+//     need their own API key, and the real key never touches the browser.
+//  2. BYOK (bring your own key) — user pasted THEIR OWN Anthropic key in
+//     Profile settings. That's their own key/their own risk, so calling
+//     Anthropic directly with it is fine — this is just an MVP convenience
+//     so the team doesn't have to run/pay for a backend yet.
+//  3. localAnalysis()/localTips()/localAIReply() — rule-based fallback so
+//     the app still feels alive with zero setup.
+// Never hardcode YOUR OWN key here or read it from anywhere but the user's
+// own input field — that's the mistake that leaks a shared key to everyone.
+const AI_PROXY_URL = '/api/ai'; // same-origin path served by server.js, if deployed
+
 async function aiCall(systemPrompt, userMsg, maxTokens=500) {
+  try {
+    const res=await fetch(AI_PROXY_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({system:systemPrompt,messages:[{role:'user',content:userMsg}],max_tokens:maxTokens})
+    });
+    if(res.ok){
+      const data=await res.json();
+      if(!data.error) return data.content?.[0]?.text||'';
+    }
+  } catch(e) { /* no backend deployed — fall through to BYOK */ }
+
   const storedKey = localStorage.getItem('mw_api_key') || '';
-  const headers = {'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
-  if (storedKey) headers['x-api-key'] = storedKey;
-  const res=await fetch('https://api.anthropic.com/v1/messages',{
+  if(!storedKey) throw new Error('no backend and no personal API key set');
+  const res2=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
-    headers,
+    headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':storedKey},
     body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTokens,system:systemPrompt,messages:[{role:'user',content:userMsg}]})
   });
-  const data=await res.json();
+  const data=await res2.json();
   if (data.error) throw new Error(data.error.message || 'API error');
   return data.content?.[0]?.text||'';
 }
@@ -2684,10 +2717,10 @@ async function sendAI(userMsg, container) {
   _hist.push({role:'user',content:userMsg});
   const sys=`Ты финансовый ИИ-советник My Way. Помогай пользователю ${CUR_USER.name} управлять финансами. Контекст: ${buildCtx()}. Отвечай на ${LANG==='kz'?'казахском':LANG==='en'?'английском':'русском'}, 2-4 предложения, используй эмодзи.`;
   try {
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch(AI_PROXY_URL,{
       method:'POST',
-      headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:350,system:sys,messages:_hist.slice(-8)})
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({system:sys,messages:_hist.slice(-8),max_tokens:350})
     });
     const data=await res.json();
     const reply=data.content?.[0]?.text||localAIReply(userMsg);
