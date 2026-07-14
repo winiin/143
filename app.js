@@ -392,15 +392,25 @@ function saveAccounts(a) {
   try{ localStorage.setItem('mw_accs',JSON.stringify(a)); } catch{}
 }
 
-// ── OPTIONAL DATA SYNC ───────────────────────────────────────
-// Если когда-нибудь появится реальный бэкенд на /api/data, saveData()/
-// loadData() попробуют синхронизировать транзакции/цели/карты через него.
-// Если бэкенда нет (сейчас так и есть) — запрос просто не проходит и
-// приложение прозрачно работает из localStorage-кэша, ничего не ломая.
+// ── OPTIONAL BACKEND (server/server.js) ─────────────────────
+// Если бэкенд запущен (см. /server) — регистрация, логин, синхронизация
+// данных и оплата идут через него по-настоящему (JWT-токен, bcrypt на
+// сервере, SQLite). Если бэкенда нет — приложение прозрачно откатывается
+// на локальный режим (localStorage), ничего не ломая. Это НЕ то же самое,
+// что "фича облегчённого режима" — это ограничение MVP.
 const API_BASE = '/api';
+
+function getToken() {
+  try{ return localStorage.getItem('mw_token')||null; } catch{ return null; }
+}
+function setToken(tok) {
+  try{ tok?localStorage.setItem('mw_token',tok):localStorage.removeItem('mw_token'); } catch{}
+}
 
 async function apiFetch(path, opts={}) {
   const headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
+  const token = getToken();
+  if(token) headers['Authorization'] = 'Bearer '+token;
   const res = await fetch(API_BASE+path, Object.assign({}, opts, {headers}));
   let data = {};
   try{ data = await res.json(); }catch{}
@@ -496,21 +506,23 @@ async function loadData() {
 }
 
 function isPremium() {
-  // Премиум не используется — всё бесплатно в течение 30 дней с регистрации
-  return false;
+  if (!DATA || !DATA.premium) return false;
+  if (DATA.premiumUntil && Date.now() > DATA.premiumUntil) {
+    // Подписка истекла — снимаем статус локально (сервер уже знает об этом
+    // из своей БД и не продлит его при следующей синхронизации).
+    DATA.premium = false;
+    return false;
+  }
+  return true;
 }
 
 function getTrialStart() {
-  // Trial clock starts on FIRST real visit to the app
-  // Not at registration — user might register and never visit
+  // Единый источник правды — DATA.trialStart (синхронизируется с сервером/
+  // аккаунтом в loadData()). Раньше здесь был отдельный несвязанный ключ
+  // localStorage 'mw_trial_'+email, который не переживал экспорт/синк данных.
   if (!CUR_USER) return Date.now();
-  const key = 'mw_trial_' + CUR_USER.email;
-  let ts = localStorage.getItem(key);
-  if (!ts) {
-    ts = Date.now().toString();
-    localStorage.setItem(key, ts);
-  }
-  return parseInt(ts);
+  if (DATA && DATA.trialStart) return DATA.trialStart;
+  return Date.now();
 }
 
 function isTrialActive() {
@@ -701,12 +713,29 @@ async function doLogin() {
   const email=document.getElementById('loginEmail').value.trim().toLowerCase();
   const pass=document.getElementById('loginPassword').value;
   if(!email||!pass){showErr('loginError',t('fillAll'));return;}
+
+  // 1) Пробуем настоящий бэкенд (bcrypt-проверка на сервере, JWT-токен)
+  try {
+    const res = await fetch(API_BASE+'/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,password:pass})});
+    const data = await res.json();
+    if(res.ok && data.token) {
+      setToken(data.token);
+      CUR_USER={name:data.name,email:data.email,avatar:data.name.charAt(0).toUpperCase()};
+      setSession(email); await loadData(); showApp();
+      return;
+    }
+    if(res.status===401){ showErr('loginError', data.error==='user not found'?t('userNotFound'):t('wrongPass')); return; }
+    // любой другой статус — считаем бэкенд недоступным и падаем на локальный режим
+  } catch(e) { /* бэкенд не запущен — используем локальный режим */ }
+
+  // 2) Локальный режим (без бэкенда) — как раньше
   const accs=getAccounts();
   if(!accs[email]){showErr('loginError',t('userNotFound'));return;}
   const ok=await verifyPass(pass, accs[email].password);
   if(!ok){showErr('loginError',t('wrongPass'));return;}
+  setToken(null);
   CUR_USER={name:accs[email].name,email,avatar:accs[email].name.charAt(0).toUpperCase()};
-  setSession(email); loadData(); showApp();
+  setSession(email); await loadData(); showApp();
 }
 
 async function doRegister() {
@@ -717,17 +746,34 @@ async function doRegister() {
   if(!email.includes('@')||!email.includes('.')){showErr('registerError',t('badEmail'));return;}
   const passCheck=validatePass(pass);
   if(!passCheck.ok){showErr('registerError','❌ '+passCheck.msg);return;}
+
+  // 1) Пробуем настоящий бэкенд
+  try {
+    const res = await fetch(API_BASE+'/register', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name,email,password:pass})});
+    const data = await res.json();
+    if(res.ok && data.token) {
+      setToken(data.token);
+      CUR_USER={name:data.name,email:data.email,avatar:data.name.charAt(0).toUpperCase()};
+      setSession(email); await loadData(); showApp();
+      return;
+    }
+    if(res.status===409){ showErr('registerError',t('emailExists')); return; }
+    // другой статус — бэкенд недоступен, идём в локальный режим
+  } catch(e) { /* бэкенд не запущен — используем локальный режим */ }
+
+  // 2) Локальный режим (без бэкенда) — как раньше
   const accs=getAccounts();
   if(accs[email]){showErr('registerError',t('emailExists'));return;}
   const d=defaultData(); d.lang=LANG; d.trialStart=Date.now(); // Set ONCE at registration
   accs[email]={name,email,password:await hashPass(pass),data:d,joinedAt:Date.now()};
   saveAccounts(accs);
+  setToken(null);
   CUR_USER={name,email,avatar:name.charAt(0).toUpperCase()};
-  setSession(email); loadData(); showApp();
+  setSession(email); await loadData(); showApp();
 }
 
 function doLogout() {
-  setSession(null); CUR_USER=null; DATA=defaultData();
+  setSession(null); setToken(null); CUR_USER=null; DATA=defaultData();
   document.getElementById('app').classList.add('hidden');
   document.getElementById('authScreen').classList.remove('hidden');
   document.getElementById('aiChat').classList.add('hidden');
@@ -1360,7 +1406,7 @@ function selectPlan(plan) {
   }
 }
 
-function handlePaywallPay(btn) {
+async function handlePaywallPay(btn) {
   var plan = window._pwPlan || 'monthly';
 
   // Validate card
@@ -1380,10 +1426,71 @@ function handlePaywallPay(btn) {
   btn.disabled = true;
   btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" style="animation:spin .7s linear infinite;fill:none;stroke:#fff;stroke-width:2.5;"><circle cx="12" cy="12" r="10" stroke-opacity=".2"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> Обработка...';
 
-  setTimeout(function(){
+  // Настоящий (тестовый) платёж через свой бэкенд: create -> test-confirm.
+  // Это НЕ реальный платёжный шлюз (для Kaspi/Stripe нужен мерчант-аккаунт),
+  // но статус платежа реально создаётся и хранится в БД на сервере, а premium
+  // выдаётся только после подтверждения — не как раньше, когда клиент сам
+  // себе через 1.8 сек рисовал "успех" без единого запроса к серверу.
+  try {
+    const created = await apiFetch('/payment/create', {method:'POST', body: JSON.stringify({plan})});
+    const confirmed = await apiFetch('/payment/test-confirm', {method:'POST', body: JSON.stringify({paymentId: created.paymentId})});
+    DATA.premium = true;
+    DATA.premiumSince = Date.now();
+    DATA.premiumPlan = plan;
+    DATA.premiumUntil = confirmed.premium_until;
+    saveData();
     document.querySelectorAll('.paywall-modal').forEach(function(m){ m.remove(); });
-    showPaymentComingSoon(plan);
-  }, 1800);
+    showPaymentTestSuccess(plan, confirmed.premium_until);
+    renderHeader();
+  } catch (e) {
+    // Бэкенд не запущен/недоступен — не ломаем демо, откатываемся на прежний
+    // экран "оплата скоро появится" + waitlist.
+    setTimeout(function(){
+      document.querySelectorAll('.paywall-modal').forEach(function(m){ m.remove(); });
+      showPaymentComingSoon(plan);
+    }, 600);
+  }
+}
+
+function showPaymentTestSuccess(plan, premiumUntil) {
+  var amount = plan === 'yearly' ? '35 000 ₸' : '3 500 ₸';
+  var card = DATA.savedCard;
+  var untilStr = new Date(premiumUntil).toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'});
+  var modal = document.createElement('div');
+  modal.className = 'modal-ov';
+  modal.innerHTML =
+    '<div class="modal-box" style="max-width:420px;padding:0;overflow:hidden;border-radius:18px;">' +
+      '<div style="background:linear-gradient(135deg,#10b981,#06b6d4);padding:24px 22px 20px;text-align:center;position:relative;">' +
+        '<button id="paytest-close" style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,.18);border:none;width:28px;height:28px;border-radius:50%;color:#fff;cursor:pointer;font-size:13px;">✕</button>' +
+        '<div style="font-size:44px;margin-bottom:8px;">✅</div>' +
+        '<div style="font-family:Space Grotesk,sans-serif;font-size:18px;font-weight:800;color:#fff;margin-bottom:4px;">Тестовая оплата прошла</div>' +
+        '<div style="font-size:11px;color:rgba(255,255,255,.85);background:rgba(0,0,0,.15);display:inline-block;padding:3px 10px;border-radius:20px;">🧪 TEST MODE — деньги не списаны</div>' +
+      '</div>' +
+      '<div style="padding:20px 22px 22px;">' +
+        '<div style="background:var(--bg3);border:1px solid var(--brd2);border-radius:var(--r);padding:13px;margin-bottom:14px;">' +
+          '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;">' +
+            '<span style="color:var(--tx3);">Тариф</span><strong>' + (plan==='yearly'?'Годовой':'Месячный') + '</strong>' +
+          '</div>' +
+          '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;">' +
+            '<span style="color:var(--tx3);">Сумма</span><strong style="color:var(--acc2);">' + amount + '</strong>' +
+          '</div>' +
+          (card ? '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;"><span style="color:var(--tx3);">Карта</span><strong>•••• ' + card.last4 + '</strong></div>' : '') +
+          '<div style="display:flex;justify-content:space-between;font-size:13px;">' +
+            '<span style="color:var(--tx3);">Активен до</span><strong style="color:var(--green);">' + untilStr + '</strong>' +
+          '</div>' +
+        '</div>' +
+        '<div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:var(--r);padding:13px;margin-bottom:14px;font-size:12px;color:var(--tx2);line-height:1.6;">' +
+          'Статус подтверждён на сервере и сохранён в базе данных. Когда подключится реальный платёжный провайдер (Kaspi Pay/Stripe), поменяется только этот шаг — весь остальной флоу останется тем же.' +
+        '</div>' +
+        '<button class="btn btn-success wf" id="paytest-ok" style="justify-content:center;font-size:13px;padding:12px;">' +
+          '<i class="fas fa-star"></i> Отлично, продолжить' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+  document.getElementById('paytest-close').addEventListener('click', function(){ modal.remove(); });
+  document.getElementById('paytest-ok').addEventListener('click', function(){ modal.remove(); });
 }
 
 function showPaymentComingSoon(plan) {
@@ -1457,6 +1564,7 @@ function cancelSubscription() {
   if(!confirm('Отменить подписку? Доступ сохранится до конца периода.')) return;
   DATA.premium=false; DATA.premiumSince=null; DATA.premiumPlan=null;
   saveData();
+  apiFetch('/payment/cancel', {method:'POST'}).catch(function(){ /* нет бэкенда — локальной отмены достаточно для демо */ });
   document.querySelectorAll('.paywall-modal,.modal-ov').forEach(function(m){ m.remove(); });
   renderHeader();
   alert('Подписка отменена.');
