@@ -379,25 +379,28 @@ function validatePass(p) {
 // ── ACCOUNTS ───────────────────────────
 let CUR_USER = null;
 
-// ── BACKEND API ─────────────────────────────────────────────
-// Раньше "аккаунты" были просто ключом в localStorage — это удобно
-// для демо, но означает, что данные не переживают смену браузера/
-// устройства и это не настоящая авторизация. Теперь регистрация,
-// логин и хранение данных идут через server.js (см. /server).
-// localStorage используется только как offline-кэш последней
-// известной копии данных, чтобы приложение не "падало" без сети.
+// Аккаунты (email/имя/хэш пароля) хранятся в localStorage — это статичный
+// фронтенд без своего сервера авторизации, поэтому логин/регистрация
+// проверяются прямо в браузере (см. hashPass/verifyPass выше).
+// ВАЖНО: это ограничение MVP, а не "фича" — данные не переживают смену
+// браузера/устройства. Для реального продукта нужен настоящий бэкенд
+// с базой данных и серверной проверкой пароля.
+function getAccounts() {
+  try{ return JSON.parse(localStorage.getItem('mw_accs')||'{}'); } catch{ return {}; }
+}
+function saveAccounts(a) {
+  try{ localStorage.setItem('mw_accs',JSON.stringify(a)); } catch{}
+}
+
+// ── OPTIONAL DATA SYNC ───────────────────────────────────────
+// Если когда-нибудь появится реальный бэкенд на /api/data, saveData()/
+// loadData() попробуют синхронизировать транзакции/цели/карты через него.
+// Если бэкенда нет (сейчас так и есть) — запрос просто не проходит и
+// приложение прозрачно работает из localStorage-кэша, ничего не ломая.
 const API_BASE = '/api';
 
-function getToken() {
-  try{ return localStorage.getItem('mw_token')||null; } catch{ return null; }
-}
-function setToken(tok) {
-  try{ tok?localStorage.setItem('mw_token',tok):localStorage.removeItem('mw_token'); } catch{}
-}
 async function apiFetch(path, opts={}) {
   const headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
-  const token = getToken();
-  if(token) headers['Authorization'] = 'Bearer '+token;
   const res = await fetch(API_BASE+path, Object.assign({}, opts, {headers}));
   let data = {};
   try{ data = await res.json(); }catch{}
@@ -446,6 +449,13 @@ let _lastSyncFailed = false;
 function saveData() {
   if(!CUR_USER) return;
   setLocalCache(CUR_USER.email, DATA);
+  // Держим accs (основное хранилище) в курсе, чтобы данные не терялись,
+  // если локальный кэш ещё не создан (например, первый вход после
+  // регистрации на новом устройстве/вкладке).
+  try{
+    const a=getAccounts();
+    if(a[CUR_USER.email]){ a[CUR_USER.email].data=DATA; saveAccounts(a); }
+  }catch{}
   clearTimeout(_saveDebounce);
   _saveDebounce = setTimeout(()=>{
     apiFetch('/data', {method:'PUT', body:JSON.stringify({data:DATA})})
@@ -464,12 +474,19 @@ async function loadData() {
     const res = await apiFetch('/data');
     serverData = res.data;
   }catch(e){
-    console.warn('[My Way] Не удалось получить данные с сервера, используем локальный кэш:', e.message);
+    // Нет бэкенда на /api — это ожидаемо для текущей версии, тихо
+    // переходим на локальные источники данных.
   }
-  const src = serverData || getLocalCache(CUR_USER.email);
+  const accs=getAccounts();
+  const acc=accs[CUR_USER.email];
+  const src = serverData || getLocalCache(CUR_USER.email) || acc?.data || null;
   if(src) {
     DATA = Object.assign(defaultData(), src);
-    if(!src.trialStart) DATA.trialStart = Date.now();
+    // trialStart берётся ТОЛЬКО из сохранённых данных, чтобы таймер
+    // пробного периода не сбрасывался при каждом входе.
+    if(src.trialStart) DATA.trialStart = src.trialStart;
+    else if(acc?.joinedAt) DATA.trialStart = acc.joinedAt;
+    else DATA.trialStart = Date.now();
   }
   if(!DATA.deposits) DATA.deposits=[];
   if(!DATA.cards) DATA.cards=[];
