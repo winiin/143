@@ -165,7 +165,15 @@ app.post('/api/payment/cancel', requireAuth, (req, res) => {
 });
 
 // ── STATIC FRONTEND ──────────────────────────────────────────
-app.use(express.static(path.join(__dirname, '..')));
+// Работает в обеих раскладках проекта:
+//  - server.js лежит в подпапке server/, а index.html — уровнем выше;
+//  - server.js лежит в той же папке, что и index.html (плоская структура).
+// Раньше здесь был жёстко прописан path.join(__dirname,'..'), что ломало
+// раздачу файлов (404 на index.html/app.js), если разложить всё плоско.
+const fs = require('fs');
+const candidateRoots = [__dirname, path.join(__dirname, '..')];
+const staticRoot = candidateRoots.find(dir => fs.existsSync(path.join(dir, 'index.html'))) || __dirname;
+app.use(express.static(staticRoot));
 
 app.listen(PORT, () => {
   console.log(`[My Way] Сервер запущен: http://localhost:${PORT}`);
