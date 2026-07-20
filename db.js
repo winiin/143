@@ -5,6 +5,9 @@ const Database = require('better-sqlite3');
 
 const db = new Database(path.join(__dirname, 'myway.db'));
 db.pragma('journal_mode = WAL');
+// Без этой прагмы better-sqlite3 не проверяет FOREIGN KEY при вставках/обновлениях,
+// и объявленные в схеме связи users<->user_data/payments ничего не гарантируют.
+db.pragma('foreign_keys = ON');
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS users (

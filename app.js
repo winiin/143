@@ -49,7 +49,7 @@ const L = {
     activeGoal:'Активная цель', noActiveGoal:'Нет активной цели',
     premTitle:'Премиум функция', premDesc:'Эта функция доступна после 1 месяца использования или при оформлении подписки.',
     premBtn:'Оформить подписку — 990 ₸/мес',
-    passRules:'Требования: мин. 6 символов, 1 заглавная, 1 строчная, 1 цифра, 1 спецсимвол',
+    passRules:'Требования: мин. 8 символов, 1 заглавная, 1 строчная, 1 цифра, 1 спецсимвол',
     passWeak:'Пароль не соответствует требованиям',
     userNotFound:'Пользователь не найден', wrongPass:'Неверный пароль',
     emailExists:'Email уже зарегистрирован', badEmail:'Некорректный email',
@@ -104,7 +104,7 @@ const L = {
     activeGoal:'Белсенді мақсат', noActiveGoal:'Белсенді мақсат жоқ',
     premTitle:'Премиум функция', premDesc:'Бұл функция 1 ай пайдаланғаннан кейін немесе жазылым рәсімдегенде қол жетімді.',
     premBtn:'Жазылым рәсімдеу — 990 ₸/ай',
-    passRules:'Талаптар: мин. 6 таңба, 1 бас, 1 кіші, 1 сан, 1 арнайы таңба',
+    passRules:'Талаптар: мін. 8 таңба, 1 бас, 1 кіші, 1 сан, 1 арнайы таңба',
     passWeak:'Құпия сөз талаптарға сай емес',
     userNotFound:'Пайдаланушы табылмады', wrongPass:'Қате құпия сөз',
     emailExists:'Email тіркелген', badEmail:'Email дұрыс емес',
@@ -159,7 +159,7 @@ const L = {
     activeGoal:'Active goal', noActiveGoal:'No active goal',
     premTitle:'Premium feature', premDesc:'This feature is available after 1 month of use or with a subscription.',
     premBtn:'Subscribe — 990 ₸/month',
-    passRules:'Requirements: min. 6 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char',
+    passRules:'Requirements: min. 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char',
     passWeak:'Password does not meet requirements',
     userNotFound:'User not found', wrongPass:'Wrong password',
     emailExists:'Email already registered', badEmail:'Invalid email',
@@ -187,6 +187,16 @@ const CUR = {
 };
 let CUR_KEY = 'KZT';
 let DARK = true;
+
+// Пользовательский текст (название карты, держатель, текст операции, название
+// цели и т.д.) рендерится через innerHTML/template-строки. Без экранирования
+// строка вида <img onerror=...> сохранённая в собственных данных пользователя
+// выполнилась бы у него же при следующем открытии — экранируем перед вставкой.
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[c]));
+}
 
 function fmtAmt(kzt) {
   const c = CUR[CUR_KEY]||CUR.KZT;
@@ -368,7 +378,7 @@ function showForgotPasswordModal() {
 }
 
 function validatePass(p) {
-  if(!p||p.length<6) return {ok:false, msg:'Минимум 6 символов'};
+  if(!p||p.length<8) return {ok:false, msg:'Минимум 8 символов'};
   if(!/[A-Z]/.test(p)) return {ok:false, msg:'Нужна хотя бы 1 заглавная буква (A-Z)'};
   if(!/[a-z]/.test(p)) return {ok:false, msg:'Нужна хотя бы 1 строчная буква (a-z)'};
   if(!/[0-9]/.test(p)) return {ok:false, msg:'Нужна хотя бы 1 цифра (0-9)'};
@@ -691,8 +701,8 @@ function updateAuthLang() {
   const pr=document.getElementById('passRules'); if(pr){
     const r=langObj.passRules||'';
     // Update pass rule texts
-    const rules=[['pr-len','Мин. 6 символов / Min. 6 chars / Мин. 6 таңба'],['pr-upper','1 заглавная / 1 Uppercase / 1 бас'],['pr-lower','1 строчная / 1 lowercase / 1 кіші'],['pr-num','1 цифра / 1 digit / 1 сан'],['pr-spec','1 спецсимвол / 1 special / 1 арнайы']];
-    const labels={ru:['Мин. 6 символов','1 заглавная','1 строчная','1 цифра','1 спецсимвол'],kz:['Мін. 6 таңба','1 бас әріп','1 кіші әріп','1 сан','1 арнайы таңба'],en:['Min. 6 chars','1 uppercase','1 lowercase','1 digit','1 special char']};
+    const rules=[['pr-len','Мин. 8 символов / Min. 8 chars / Мін. 8 таңба'],['pr-upper','1 заглавная / 1 Uppercase / 1 бас'],['pr-lower','1 строчная / 1 lowercase / 1 кіші'],['pr-num','1 цифра / 1 digit / 1 сан'],['pr-spec','1 спецсимвол / 1 special / 1 арнайы']];
+    const labels={ru:['Мин. 8 символов','1 заглавная','1 строчная','1 цифра','1 спецсимвол'],kz:['Мін. 8 таңба','1 бас әріп','1 кіші әріп','1 сан','1 арнайы таңба'],en:['Min. 8 chars','1 uppercase','1 lowercase','1 digit','1 special char']};
     const lbl=labels[LANG]||labels.ru;
     ['pr-len','pr-upper','pr-lower','pr-num','pr-spec'].forEach((id,i)=>{
       const el=document.getElementById(id); if(el) el.textContent='• '+lbl[i];
@@ -725,7 +735,8 @@ async function doLogin() {
       return;
     }
     if(res.status===401){ showErr('loginError', data.error==='user not found'?t('userNotFound'):t('wrongPass')); return; }
-    // любой другой статус — считаем бэкенд недоступным и падаем на локальный режим
+    if(res.status===400 || res.status===429){ showErr('loginError', data.error || t('fillAll')); return; }
+    // любой другой статус (сеть недоступна и т.п.) — считаем бэкенд недоступным и падаем на локальный режим
   } catch(e) { /* бэкенд не запущен — используем локальный режим */ }
 
   // 2) Локальный режим (без бэкенда) — как раньше
@@ -758,7 +769,8 @@ async function doRegister() {
       return;
     }
     if(res.status===409){ showErr('registerError',t('emailExists')); return; }
-    // другой статус — бэкенд недоступен, идём в локальный режим
+    if(res.status===400 || res.status===429){ showErr('registerError', data.error || t('fillAll')); return; }
+    // другой статус (сеть недоступна и т.п.) — бэкенд недоступен, идём в локальный режим
   } catch(e) { /* бэкенд не запущен — используем локальный режим */ }
 
   // 2) Локальный режим (без бэкенда) — как раньше
@@ -1643,9 +1655,9 @@ function renderDashboard() {
     return `<div class="tx-item">
       <div class="tx-l">
         <div class="tx-ic ${tx.type}"><i class="fas fa-${tx.type==='income'?'arrow-down':'arrow-up'}"></i></div>
-        <span class="tx-txt">${tx.text}</span>
-        <span class="tx-cat">${catEmoji(tx.category)} ${tx.category}</span>
-        ${card?`<span class="tx-card"><i class="fas fa-credit-card"></i> **** ${card.number}</span>`:''}
+        <span class="tx-txt">${esc(tx.text)}</span>
+        <span class="tx-cat">${catEmoji(tx.category)} ${esc(tx.category)}</span>
+        ${card?`<span class="tx-card"><i class="fas fa-credit-card"></i> **** ${esc(card.number)}</span>`:''}
       </div>
       <div class="tx-amt ${tx.type}">${tx.type==='income'?'+':'-'}${fmtAmt(tx.amount)}</div>
     </div>`;
@@ -1847,9 +1859,9 @@ function renderFullTxList(f) {
     return `<div class="tx-item">
       <div class="tx-l">
         <div class="tx-ic ${tx.type}"><i class="fas fa-${tx.type==='income'?'arrow-down':'arrow-up'}"></i></div>
-        <span class="tx-txt">${tx.text}</span>
-        <span class="tx-cat">${catEmoji(tx.category)} ${tx.category}</span>
-        ${card?`<span class="tx-card"><i class="fas fa-credit-card"></i> **** ${card.number}</span>`:''}
+        <span class="tx-txt">${esc(tx.text)}</span>
+        <span class="tx-cat">${catEmoji(tx.category)} ${esc(tx.category)}</span>
+        ${card?`<span class="tx-card"><i class="fas fa-credit-card"></i> **** ${esc(card.number)}</span>`:''}
         ${d?`<span style="font-size:10px;color:var(--tx3);">${d}</span>`:''}
       </div>
       <div style="display:flex;align-items:center;gap:5px;">
@@ -1998,12 +2010,12 @@ function renderCardsList() {
       <!-- Card visual -->
       <div class="bank-card" style="background:${CARD_BG[c.color]||CARD_BG.purple};border-radius:0;position:relative;">
         <button class="card-del-btn" data-id="${c.id}"><i class="fas fa-times"></i></button>
-        <div class="bc-top"><div class="bc-bank">${c.bank}</div><div class="bc-type">${c.type.toUpperCase()}</div></div>
+        <div class="bc-top"><div class="bc-bank">${esc(c.bank)}</div><div class="bc-type">${esc(c.type).toUpperCase()}</div></div>
         <div class="bc-chip">▣ ▣</div>
-        <div class="bc-num">**** **** **** ${c.number}</div>
+        <div class="bc-num">**** **** **** ${esc(c.number)}</div>
         <div class="bc-bot">
-          <div><div style="font-size:8px;color:rgba(255,255,255,.5);">ДЕРЖАТЕЛЬ</div><div class="bc-holder">${c.holder}</div></div>
-          <div><div style="font-size:8px;color:rgba(255,255,255,.5);">СРОК</div><div class="bc-holder">${c.expiry}</div></div>
+          <div><div style="font-size:8px;color:rgba(255,255,255,.5);">ДЕРЖАТЕЛЬ</div><div class="bc-holder">${esc(c.holder)}</div></div>
+          <div><div style="font-size:8px;color:rgba(255,255,255,.5);">СРОК</div><div class="bc-holder">${esc(c.expiry)}</div></div>
         </div>
       </div>
 
@@ -2132,36 +2144,56 @@ async function importPDFForCard(file, cardId) {
 "analysis":{"totalIncome":0,"totalExpense":0,"topCategory":"","summary":"","tips":[],"monthBalance":""}}
 Категории: Транспорт,Учёба,Здоровье,Связь/подписки,Одежда/обувь,Красота/уход,Кафе/доставка,Подарки,Развлечения,Большая покупка,Поездка/путешествие,Зарплата,Стипендия,Перевод от семьи,Другое`;
 
-    const cardApiKey = localStorage.getItem('mw_api_key') || '';
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'pdfs-2024-09-25',
-        'anthropic-dangerous-direct-browser-access': 'true',
-        ...(cardApiKey ? {'x-api-key': cardApiKey} : {})
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4000,
-        system: systemPrompt,
-        messages: [{
-          role: 'user',
-          content: [{
-            type: 'document',
-            source: { type: 'base64', media_type: 'application/pdf', data: base64 }
-          }, {
-            type: 'text',
-            text: 'Извлеки транзакции из этой банковской выписки и верни JSON.'
-          }]
-        }]
-      })
-    });
+    const userMessage = {
+      role: 'user',
+      content: [{
+        type: 'document',
+        source: { type: 'base64', media_type: 'application/pdf', data: base64 }
+      }, {
+        type: 'text',
+        text: 'Извлеки транзакции из этой банковской выписки и верни JSON.'
+      }]
+    };
 
-    const data = await response.json();
-    if (data.error) throw new Error(data.error.message || 'Ошибка API: ' + JSON.stringify(data.error));
-    const rawText = data.content?.[0]?.text || '';
+    // 1) Пробуем серверный прокси (/api/ai) — ключ остаётся на сервере и
+    //    никогда не попадает в браузер. 2) Если прокси недоступен/не настроен —
+    //    падаем на BYOK (свой ключ пользователя из Profile), как явный фолбэк.
+    let rawText = '';
+    try {
+      const proxyRes = await fetch(AI_PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(getToken() ? {Authorization: 'Bearer ' + getToken()} : {}) },
+        body: JSON.stringify({ system: systemPrompt, messages: [userMessage], max_tokens: 4000 })
+      });
+      if (proxyRes.ok) {
+        const data = await proxyRes.json();
+        if (!data.error) rawText = data.content?.[0]?.text || '';
+      }
+    } catch (e) { /* прокси недоступен — пробуем BYOK ниже */ }
+
+    if (!rawText) {
+      const cardApiKey = localStorage.getItem('mw_api_key') || '';
+      if (!cardApiKey) throw new Error('Сервер не настроен для ИИ, и нет своего API-ключа (Профиль → API-ключ)');
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'anthropic-version': '2023-06-01',
+          'anthropic-beta': 'pdfs-2024-09-25',
+          'anthropic-dangerous-direct-browser-access': 'true',
+          'x-api-key': cardApiKey
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 4000,
+          system: systemPrompt,
+          messages: [userMessage]
+        })
+      });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error.message || 'Ошибка API: ' + JSON.stringify(data.error));
+      rawText = data.content?.[0]?.text || '';
+    }
     if (!rawText) throw new Error('Пустой ответ от API');
 
     // Robust JSON extraction
@@ -2408,7 +2440,7 @@ function renderGoalsList() {
     const pct=Math.min(100,Math.round(g.saved/g.target*100));
     return `<div class="goal-item ${g.id===DATA.activeGoalId?'active':''}" data-id="${g.id}">
       <span class="g-emoji">${g.emoji}</span>
-      <div class="g-info"><div class="g-name">${g.name}</div><div class="g-sub">${fmtAmt(g.saved)} / ${fmtAmt(g.target)}</div></div>
+      <div class="g-info"><div class="g-name">${esc(g.name)}</div><div class="g-sub">${fmtAmt(g.saved)} / ${fmtAmt(g.target)}</div></div>
       <div class="g-bar"><div class="fill" style="width:${pct}%;"></div></div>
       <div class="g-pct">${pct}%</div>
       <button class="btn btn-primary btn-xs g-plus" data-id="${g.id}" title="+"><i class="fas fa-plus"></i></button>
@@ -2451,7 +2483,7 @@ function renderRoadmap() {
   const cur=Math.min(4,Math.floor(pct/100*4));
   d.innerHTML=`<div style="text-align:center;">
     <div style="font-size:30px;">${g.emoji}</div>
-    <div style="font-size:15px;font-weight:700;margin:5px 0;">${g.name}</div>
+    <div style="font-size:15px;font-weight:700;margin:5px 0;">${esc(g.name)}</div>
     <div style="font-size:12px;color:var(--tx3);">${fmtAmt(g.saved)} / ${fmtAmt(g.target)}</div>
     <div style="height:6px;background:var(--bg4);border-radius:4px;margin:10px 0;overflow:hidden;"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:4px;transition:width .5s;"></div></div>
     <div style="font-size:28px;font-weight:900;color:var(--acc2);">${pct}%</div>
@@ -3074,8 +3106,8 @@ function renderImportTab() {
         importedTxs.slice(0,10).map(tx => `<div class="tx-item">
           <div class="tx-l">
             <div class="tx-ic ${tx.type}"><i class="fas fa-${tx.type==='income'?'arrow-down':'arrow-up'}"></i></div>
-            <span class="tx-txt">${tx.text}</span>
-            <span class="tx-cat">${tx.category}</span>
+            <span class="tx-txt">${esc(tx.text)}</span>
+            <span class="tx-cat">${esc(tx.category)}</span>
           </div>
           <div class="tx-amt ${tx.type}">${tx.type==='income'?'+':'-'}${fmtAmt(tx.amount)}</div>
         </div>`).join('') +

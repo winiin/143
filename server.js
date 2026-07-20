@@ -39,6 +39,34 @@ const PLANS = {
   yearly:  { amount: 35000, currency: 'KZT', label: 'Premium — 1 год' },
 };
 
+// Ключ Anthropic живёт только здесь (переменная окружения на сервере) и никогда
+// не уходит в браузер. Если не задан — /api/ai вернёт 501, и фронтенд сам
+// откатится на "свой ключ пользователя" (BYOK) или на локальные заглушки.
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
+
+// ── ПРОСТОЙ RATE-LIMIT ДЛЯ АУТЕНТИФИКАЦИИ ────────────────────
+// Без внешних зависимостей: по IP считаем неудачные попытки логина/регистрации
+// за скользящее окно. Это не защита от распределённого брутфорса, но закрывает
+// самый дешёвый случай — перебор пароля с одного адреса.
+const authAttempts = new Map(); // ip -> { count, windowStart }
+const AUTH_WINDOW_MS = 15 * 60 * 1000;
+const AUTH_MAX_ATTEMPTS = 20;
+
+function authRateLimit(req, res, next) {
+  const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+  const now = Date.now();
+  const entry = authAttempts.get(ip);
+  if (!entry || now - entry.windowStart > AUTH_WINDOW_MS) {
+    authAttempts.set(ip, { count: 1, windowStart: now });
+    return next();
+  }
+  entry.count += 1;
+  if (entry.count > AUTH_MAX_ATTEMPTS) {
+    return res.status(429).json({ error: 'too many attempts, try again later' });
+  }
+  next();
+}
+
 app.use(cors());
 app.use(express.json());
 
@@ -63,7 +91,7 @@ function requireAuth(req, res, next) {
 function isValidEmail(e) { return typeof e === 'string' && e.includes('@') && e.includes('.'); }
 
 // ── AUTH ROUTES ──────────────────────────────────────────────
-app.post('/api/register', async (req, res) => {
+app.post('/api/register', authRateLimit, async (req, res) => {
   const { name, email: rawEmail, password } = req.body || {};
   const email = (rawEmail || '').trim().toLowerCase();
   if (!name || !isValidEmail(email) || !password || password.length < 8) {
@@ -82,7 +110,7 @@ app.post('/api/register', async (req, res) => {
   res.json({ token: signToken(email), name, email });
 });
 
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', authRateLimit, async (req, res) => {
   const { email: rawEmail, password } = req.body || {};
   const email = (rawEmail || '').trim().toLowerCase();
   const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
@@ -162,6 +190,44 @@ app.get('/api/payment/status/:id', requireAuth, (req, res) => {
 app.post('/api/payment/cancel', requireAuth, (req, res) => {
   db.prepare('UPDATE users SET premium = 0 WHERE email = ?').run(req.email);
   res.json({ ok: true });
+});
+
+// ── AI PROXY ─────────────────────────────────────────────────
+// Единственное место, где реально нужен ключ Anthropic. Фронтенд шлёт сюда
+// { system, messages, max_tokens }, где messages может содержать как обычный
+// текст, так и content-блоки document (для разбора PDF-выписок) — мы просто
+// прозрачно пробрасываем это в Anthropic API, добавляя свой ключ на сервере.
+// Если ANTHROPIC_API_KEY не задан, отвечаем 501, и фронтенд сам решает,
+// использовать ли ключ пользователя (BYOK) или локальные заглушки.
+app.post('/api/ai', requireAuth, async (req, res) => {
+  if (!ANTHROPIC_API_KEY) {
+    return res.status(501).json({ error: 'server AI key not configured' });
+  }
+  const { system, messages, max_tokens } = req.body || {};
+  if (!Array.isArray(messages) || !messages.length) {
+    return res.status(400).json({ error: 'missing messages' });
+  }
+  try {
+    const upstream = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'pdfs-2024-09-25',
+        'x-api-key': ANTHROPIC_API_KEY,
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: Math.min(Number(max_tokens) || 500, 4000),
+        system: system || undefined,
+        messages,
+      }),
+    });
+    const data = await upstream.json();
+    res.status(upstream.status).json(data);
+  } catch (e) {
+    res.status(502).json({ error: 'upstream AI request failed' });
+  }
 });
 
 // ── STATIC FRONTEND ──────────────────────────────────────────
